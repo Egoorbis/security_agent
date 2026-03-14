@@ -1,0 +1,116 @@
+name: Security Agent Workflow
+
+on:
+    workflow_dispatch:
+        inputs:
+            timeout-minutes:
+                description: "Timeout in minutes for the security assessment"
+                required: false
+                default: "15"
+                type: string
+            report-path:
+                description: "Path where the security report will be generated"
+                required: false
+                default: "security-reports/security-assessment-report.md"
+                type: string
+            agent-file:
+                description: "Path to the security agent configuration file"
+                required: false
+                default: ".github/agents/security-agent.md"
+                type: string
+    workflow_call:
+        inputs:
+            timeout-minutes:
+                description: "Timeout in minutes for the security assessment"
+                required: false
+                default: 15
+                type: number
+            report-path:
+                description: "Path where the security report will be generated"
+                required: false
+                default: "security-reports/security-assessment-report.md"
+                type: string
+            agent-file:
+                description: "Path to the security agent configuration file"
+                required: false
+                default: ".github/agents/security-agent.md"
+                type: string
+        secrets:
+            COPILOT_GITHUB_TOKEN:
+                description: "GitHub token for Copilot CLI authentication"
+                required: true
+
+jobs:
+    security-assessment:
+        runs-on: ubuntu-latest
+        timeout-minutes: ${{ inputs.timeout-minutes || 15 }}
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+
+            - name: Install GitHub Copilot CLI
+              run: npm i -g @github/copilot
+
+            - name: Run Security Agent via Copilot CLI
+              env:
+                  COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+              run: |
+                  set -euo pipefail
+                  AGENT_PROMPT=$(cat ${{ inputs.agent-file || '.github/agents/security-agent.md' }})
+                  PROMPT="$AGENT_PROMPT"
+                  PROMPT+=$'\n\nContext:\n'
+                  PROMPT+="- Repository: $GITHUB_REPOSITORY"
+                  PROMPT+=$'\n\nTask:\n'
+                  PROMPT+=$"\n- Execute the instructions on the full codebase"
+                  PROMPT+=$'\n- Generate the security report at ${{ inputs.report-path || 'security-reports/security-assessment-report.md' }} summarizing findings, severity, and remediation guidance.'
+
+                  copilot --prompt "$PROMPT" --allow-all-tools --allow-all-paths < /dev/null
+
+            - name: Output security report as summary
+              if: always()
+              run: |
+                  set -euo pipefail
+                  REPORT_PATH="${{ inputs.report-path || 'security-reports/security-assessment-report.md' }}"
+
+                  if [ ! -f "$REPORT_PATH" ]; then
+                    echo "No security report generated; skipping summary."
+                    exit 0
+                  fi
+
+                  echo "## Security Assessment Report" >> $GITHUB_STEP_SUMMARY
+                  cat "$REPORT_PATH" >> $GITHUB_STEP_SUMMARY
+
+            - name: Upload security report artifact
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: security-assessment-report-${{ github.run_id }}
+                  path: ${{ inputs.report-path || 'security-reports/security-assessment-report.md' }}
+                  retention-days: 30
+
+            - name: Check for critical vulnerabilities
+              if: always()
+              run: |
+                  set -euo pipefail
+                  REPORT_PATH="${{ inputs.report-path || 'security-reports/security-assessment-report.md' }}"
+
+                  if [ ! -f "$REPORT_PATH" ]; then
+                    echo "No security report generated; skipping critical check."
+                    exit 0
+                  fi
+
+                  if grep -q "THIS ASSESSMENT CONTAINS A CRITICAL VULNERABILITY" "$REPORT_PATH"; then
+                    echo "❌ CRITICAL VULNERABILITY DETECTED - Workflow failed"
+                    echo "The security assessment found critical vulnerabilities that must be addressed before proceeding."
+                    exit 1
+                  else
+                    echo "✅ No critical vulnerabilities detected"
+                  fi

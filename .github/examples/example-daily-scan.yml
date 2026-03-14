@@ -1,0 +1,17 @@
+name: Daily Security Assessment
+
+# Run daily at 2 AM UTC
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  security-assessment:
+    uses: Egoorbis/security-agent/.github/workflows/security-agent.yml@main
+    with:
+      timeout-minutes: 15
+      report-path: "security-reports/daily-assessment.md"
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}

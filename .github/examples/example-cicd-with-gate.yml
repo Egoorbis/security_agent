@@ -1,0 +1,44 @@
+name: CI/CD with Security Gate
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  security:
+    name: Security Assessment
+    uses: Egoorbis/security-agent/.github/workflows/security-agent.yml@main
+    with:
+      timeout-minutes: 15
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+
+  build:
+    name: Build Application
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: npm run build
+
+  test:
+    name: Run Tests
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: npm test
+
+  deploy:
+    name: Deploy to Production
+    needs: [security, build, test]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: npm run deploy
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}

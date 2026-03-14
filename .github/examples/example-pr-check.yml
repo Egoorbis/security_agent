@@ -1,0 +1,13 @@
+name: Security Check on Pull Requests
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  security-assessment:
+    uses: Egoorbis/security-agent/.github/workflows/security-agent.yml@main
+    with:
+      timeout-minutes: 15
+    secrets:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
