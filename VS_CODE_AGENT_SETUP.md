@@ -1,6 +1,6 @@
 # VS Code Agent Integration Guide
 
-Yes! You can configure the Security Agent as a **VS Code Agent** in multiple ways. This guide covers the best approaches.
+This guide explains how to set up and run the Security Agent in VS Code as a **Custom Agent** to scan any repository you have open.
 
 ## Option 1: GitHub Copilot Agent (Easiest)
 
@@ -12,7 +12,7 @@ If you use **GitHub Copilot Chat** in VS Code, you can register this as a custom
 
 2. **Create Agent Specification File**
 
-Create `.vscode/agent.yaml` or `.github/agents/agent.yaml`:
+Create a new custom agent in the User profile or workspace [file location](https://code.visualstudio.com/docs/copilot/customization/custom-agents#_custom-agent-file-locations)
 
 ```yaml
 name: Security Agent
@@ -46,7 +46,7 @@ commands:
       Check for license compliance issues.
 ```
 
-3. **Reference in Copilot Chat**
+1. **Reference in Copilot Chat**
 
 In VS Code, open Copilot Chat and use:
 ```
