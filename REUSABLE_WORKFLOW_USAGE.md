@@ -35,7 +35,9 @@ The workflow accepts the following inputs:
 | ----------------- | ------ | ------------------------------------------------ | ---------------------------------------------- |
 | `timeout-minutes` | number | 15                                               | Maximum time for security assessment (minutes) |
 | `report-path`     | string | `security-reports/security-assessment-report.md` | Path where report is generated                 |
-| `agent-file`      | string | `.github/agents/security-agent.md`               | Path to agent configuration file               |
+| `agent-file`      | string | `.github/agents/security-agent.md`               | Path to custom agent configuration file (optional) |
+
+**Note**: By default, the workflow uses the built-in security agent configuration from the `Egoorbis/security_agent` repository. You only need to specify `agent-file` if you want to use a custom security agent configuration from your own repository.
 
 ### With Custom Configuration
 
@@ -109,11 +111,12 @@ jobs:
 
 The reusable workflow:
 1. ✅ Checks out your repository
-2. ✅ Runs comprehensive security analysis using GitHub Copilot
-3. ✅ Generates a detailed security report
-4. ✅ Uploads report as workflow artifact (30-day retention)
-5. ✅ Posts summary to GitHub Actions summary
-6. ❌ **Fails the workflow if critical vulnerabilities are detected**
+2. ✅ Checks out the security agent configuration from `Egoorbis/security_agent` (unless custom agent file is specified)
+3. ✅ Runs comprehensive security analysis using GitHub Copilot
+4. ✅ Generates a detailed security report
+5. ✅ Uploads report as workflow artifact (30-day retention)
+6. ✅ Posts summary to GitHub Actions summary
+7. ❌ **Fails the workflow if critical vulnerabilities are detected**
 
 ## Report Location
 

@@ -50,6 +50,14 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            - name: Checkout security_agent repository for agent file
+              uses: actions/checkout@v4
+              with:
+                  repository: Egoorbis/security_agent
+                  path: .security-agent-repo
+                  sparse-checkout: |
+                      .github/agents/security-agent.md
+
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
@@ -64,7 +72,12 @@ jobs:
                   GITHUB_REPOSITORY: ${{ github.repository }}
               run: |
                   set -euo pipefail
-                  AGENT_PROMPT=$(cat ${{ inputs.agent-file || '.github/agents/security-agent.md' }})
+                  # Use agent file from security_agent repo if not overridden
+                  AGENT_FILE="${{ inputs.agent-file }}"
+                  if [ -z "$AGENT_FILE" ] || [ "$AGENT_FILE" = ".github/agents/security-agent.md" ]; then
+                      AGENT_FILE=".security-agent-repo/.github/agents/security-agent.md"
+                  fi
+                  AGENT_PROMPT=$(cat "$AGENT_FILE")
                   PROMPT="$AGENT_PROMPT"
                   PROMPT+=$'\n\nContext:\n'
                   PROMPT+="- Repository: $GITHUB_REPOSITORY"
