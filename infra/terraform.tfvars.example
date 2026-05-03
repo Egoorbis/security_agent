@@ -10,7 +10,7 @@ location    = "eastus"
 
 # Container Registry (pre-existing, ABAC-enabled)
 acr_name                = "metrreg"
-acr_resource_group_name = "REPLACE_WITH_ACR_RESOURCE_GROUP"
+acr_resource_group_name = "rg-base-container"
 
 # Agent image
 agent_image_name = "m365-security-agent"
