@@ -1,0 +1,129 @@
+# Default security rules for the M365 Security Agent
+#
+# Each rule is evaluated against a snapshot of tenant data collected via
+# the Microsoft Graph API.  Add, remove, or modify rules to customise the
+# security baseline for your organisation.
+#
+# Schema
+# ------
+# id                    : unique rule identifier (string)
+# title                 : short human-readable title (may use {placeholders})
+# description           : detailed explanation (may use {placeholders})
+# severity              : critical | high | medium | low | informational
+# enabled               : true | false
+# resource_type         : Graph resource type this rule targets
+# check                 : name of the built-in evaluator function
+# recommendation        : remediation advice shown in reports and chat
+# remediation_available : true if the agent can auto-remediate
+# parameters            : optional key/value pairs passed to the evaluator
+
+rules:
+  # -------------------------------------------------------------------------
+  # Multi-Factor Authentication
+  # -------------------------------------------------------------------------
+
+  - id: "M365-MFA-001"
+    title: "User not registered for MFA"
+    description: "User '{user}' has not registered any MFA method."
+    severity: high
+    enabled: true
+    resource_type: "User"
+    check: "user_no_mfa"
+    recommendation: >-
+      Require MFA registration via a Conditional Access policy
+      or the per-user MFA settings portal.
+    remediation_available: false
+
+  - id: "M365-CA-001"
+    title: "No Conditional Access policy enforces MFA for all users"
+    description: >-
+      No enabled Conditional Access policy was found that targets all users
+      and requires MFA as a grant control.
+    severity: critical
+    enabled: true
+    resource_type: "ConditionalAccessPolicy"
+    check: "no_mfa_ca_policy"
+    recommendation: >-
+      Create a Conditional Access policy targeting all users with
+      'Require multi-factor authentication' as a grant control.
+    remediation_available: true
+
+  # -------------------------------------------------------------------------
+  # Legacy Authentication
+  # -------------------------------------------------------------------------
+
+  - id: "M365-CA-002"
+    title: "No Conditional Access policy blocks legacy authentication"
+    description: >-
+      Legacy authentication protocols (Basic Auth, SMTP AUTH, etc.) do not
+      support MFA and are frequently exploited in credential-stuffing attacks.
+    severity: high
+    enabled: true
+    resource_type: "ConditionalAccessPolicy"
+    check: "legacy_auth_not_blocked"
+    recommendation: >-
+      Create a Conditional Access policy that blocks all legacy authentication
+      clients for all users.
+    remediation_available: true
+
+  # -------------------------------------------------------------------------
+  # Guest / External Access
+  # -------------------------------------------------------------------------
+
+  - id: "M365-GUEST-001"
+    title: "Guest invitations allowed from broad audience"
+    description: >-
+      The tenant allows guest invitations from '{value}'. Restricting this to
+      admins only reduces the risk of unauthorised external access.
+    severity: medium
+    enabled: true
+    resource_type: "ExternalIdentitiesPolicy"
+    check: "permissive_guest_invites"
+    recommendation: >-
+      Change 'allowInvitesFrom' to 'adminsOnly' in the External Identities
+      policy.
+    remediation_available: true
+    parameters:
+      threshold: adminsOnly
+
+  # -------------------------------------------------------------------------
+  # Application Registrations
+  # -------------------------------------------------------------------------
+
+  - id: "M365-APP-001"
+    title: "App registration allows multi-tenant sign-in"
+    description: >-
+      Application '{app}' is configured for multi-tenant sign-in
+      (signInAudience = AzureADMultipleOrgs), which increases the attack
+      surface.
+    severity: medium
+    enabled: true
+    resource_type: "Application"
+    check: "multitenant_app_registration"
+    recommendation: >-
+      Restrict signInAudience to 'AzureADMyOrg' unless multi-tenant access is
+      a deliberate requirement.
+    remediation_available: false
+
+  # -------------------------------------------------------------------------
+  # Privileged Identity Management
+  # -------------------------------------------------------------------------
+
+  - id: "M365-PIM-001"
+    title: "Permanent privileged role assignment: {role}"
+    description: >-
+      '{principal}' holds a permanent (always-active) assignment to '{role}'.
+      Permanent privileged assignments bypass just-in-time access controls.
+    severity: high
+    enabled: true
+    resource_type: "RoleAssignment"
+    check: "permanent_privileged_role"
+    recommendation: >-
+      Convert permanent assignments to PIM eligible assignments so activation
+      requires approval and MFA.
+    remediation_available: false
+    parameters:
+      privileged_role_ids:
+        - "62e90394-69f5-4237-9190-012177145e10"  # Global Administrator
+        - "e8611ab8-c189-46e8-94e1-60213ab1f814"  # Privileged Role Administrator
+        - "194ae4cb-b126-40b2-bd5b-6091b380977d"  # Security Administrator
