@@ -44,7 +44,7 @@ resource "azurerm_role_assignment" "kv_secrets_user" {
 
 resource "azurerm_role_assignment" "acr_pull" {
   scope                = var.acr_resource_id
-  role_definition_name = "AcrPull"
+  role_definition_name = "Container Registry Repository Reader"
   principal_id         = azurerm_user_assigned_identity.agent.principal_id
 }
 

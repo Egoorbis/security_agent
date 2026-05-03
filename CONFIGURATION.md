@@ -60,13 +60,16 @@ Go to **Entra ID → App registrations → m365-security-agent-cicd → Certific
 
 Assign the following roles to the service principal (`AZURE_CLIENT_ID`) **before the first pipeline run**.
 
+> **Note:** Because this ACR has ABAC enabled, roles are assigned at the **repository** level (not the registry level). The scope format is:
+> `/subscriptions/{sub}/resourceGroups/rg-base-container/providers/Microsoft.ContainerRegistry/registries/metrreg/repositories/m365-security-agent`
+
 | Scope | Role | Why |
 |---|---|---|
 | Target subscription (or the agent resource group once created) | `Contributor` | Create/manage resource group, Key Vault, Azure OpenAI, Container App |
-| `rg-base-container` / `metrreg` ACR | `AcrPush` | Push Docker images; the pipeline logs in via OIDC – no admin credentials needed |
+| `metrreg/repositories/m365-security-agent` (repo scope) | `Container Registry Repository Writer` | Push Docker images via OIDC; ABAC-compatible replacement for `AcrPush` |
 | Terraform state storage account | `Storage Blob Data Contributor` | Read/write the `.tfstate` blob |
 
-> The `AcrPull` role for the Container App managed identity is created automatically by `terraform apply` via `azurerm_role_assignment.acr_pull` – no manual action required.
+> The `Container Registry Repository Reader` role for the Container App managed identity is assigned automatically by `terraform apply` via `azurerm_role_assignment.acr_pull` – no manual action required.
 
 ---
 
