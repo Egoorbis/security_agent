@@ -121,6 +121,7 @@ def test_query_no_findings():
 
 def test_query_mfa():
     findings = [_make_finding("M365-MFA-001", Severity.HIGH)]
+    findings[0].category = "mfa"
     reporter = SecurityReporter()
     reply = reporter.handle_query(
         "How many users are missing MFA?",

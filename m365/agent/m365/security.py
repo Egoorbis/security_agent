@@ -33,6 +33,7 @@ class Finding:
     resource_name: str
     recommendation: str
     remediation_available: bool = False
+    category: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -171,6 +172,7 @@ class SecurityAssessor:
                             "the per-user MFA settings portal."
                         ),
                         remediation_available=False,
+                        category="mfa",
                     )
                 )
 
@@ -206,6 +208,7 @@ class SecurityAssessor:
                         "with 'Require multi-factor authentication' as a grant control."
                     ),
                     remediation_available=True,
+                    category="mfa",
                 )
             )
 
@@ -242,6 +245,7 @@ class SecurityAssessor:
                         "External Identities policy."
                     ),
                     remediation_available=True,
+                    category="guest_access",
                 )
             )
 
@@ -292,6 +296,7 @@ class SecurityAssessor:
                             "multi-tenant access is a deliberate requirement."
                         ),
                         remediation_available=False,
+                        category="app_registrations",
                     )
                 )
 
@@ -327,6 +332,7 @@ class SecurityAssessor:
                         "authentication clients for all users."
                     ),
                     remediation_available=True,
+                    category="legacy_auth",
                 )
             )
 
@@ -370,6 +376,7 @@ class SecurityAssessor:
                             "so activation requires approval and MFA."
                         ),
                         remediation_available=False,
+                        category="privileged_access",
                     )
                 )
 

@@ -29,6 +29,7 @@ rules:
     enabled: true
     resource_type: "User"
     check: "user_no_mfa"
+    category: "mfa"
     recommendation: >-
       Require MFA registration via a Conditional Access policy
       or the per-user MFA settings portal.
@@ -43,6 +44,7 @@ rules:
     enabled: true
     resource_type: "ConditionalAccessPolicy"
     check: "no_mfa_ca_policy"
+    category: "mfa"
     recommendation: >-
       Create a Conditional Access policy targeting all users with
       'Require multi-factor authentication' as a grant control.
@@ -61,6 +63,7 @@ rules:
     enabled: true
     resource_type: "ConditionalAccessPolicy"
     check: "legacy_auth_not_blocked"
+    category: "legacy_auth"
     recommendation: >-
       Create a Conditional Access policy that blocks all legacy authentication
       clients for all users.
@@ -79,6 +82,7 @@ rules:
     enabled: true
     resource_type: "ExternalIdentitiesPolicy"
     check: "permissive_guest_invites"
+    category: "guest_access"
     recommendation: >-
       Change 'allowInvitesFrom' to 'adminsOnly' in the External Identities
       policy.
@@ -100,6 +104,7 @@ rules:
     enabled: true
     resource_type: "Application"
     check: "multitenant_app_registration"
+    category: "app_registrations"
     recommendation: >-
       Restrict signInAudience to 'AzureADMyOrg' unless multi-tenant access is
       a deliberate requirement.
@@ -118,6 +123,7 @@ rules:
     enabled: true
     resource_type: "RoleAssignment"
     check: "permanent_privileged_role"
+    category: "privileged_access"
     recommendation: >-
       Convert permanent assignments to PIM eligible assignments so activation
       requires approval and MFA.

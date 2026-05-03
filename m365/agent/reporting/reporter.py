@@ -190,7 +190,7 @@ class SecurityReporter:
             posture = _find_posture(tenant_name, postures)
             if posture is None:
                 return self._list_tenants(postures)
-            mfa_findings = [f for f in posture.findings if "MFA" in f.rule_id or "mfa" in f.title.lower()]
+            mfa_findings = [f for f in posture.findings if f.category == "mfa"]
             if not mfa_findings:
                 return f"✅ No MFA-related findings for **{posture.tenant_name}**."
             return (

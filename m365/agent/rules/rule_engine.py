@@ -53,6 +53,7 @@ class Rule:
     recommendation: str
     enabled: bool = True
     remediation_available: bool = False
+    category: str = ""
     parameters: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -82,6 +83,7 @@ def load_rules(path: Path) -> List[Rule]:
                     recommendation=raw.get("recommendation", ""),
                     enabled=raw.get("enabled", True),
                     remediation_available=raw.get("remediation_available", False),
+                    category=raw.get("category", ""),
                     parameters=raw.get("parameters", {}),
                 )
             )
@@ -131,6 +133,7 @@ def _eval_user_no_mfa(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
                     resource_name=upn,
                     recommendation=rule.recommendation,
                     remediation_available=rule.remediation_available,
+                    category=rule.category,
                 )
             )
     return findings
@@ -157,6 +160,7 @@ def _eval_no_mfa_ca_policy(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
                 resource_name="Tenant-level",
                 recommendation=rule.recommendation,
                 remediation_available=rule.remediation_available,
+                category=rule.category,
             )
         ]
     return []
@@ -183,6 +187,7 @@ def _eval_legacy_auth_not_blocked(rule: Rule, data: Dict[str, Any]) -> List[Find
                 resource_name="Tenant-level",
                 recommendation=rule.recommendation,
                 remediation_available=rule.remediation_available,
+                category=rule.category,
             )
         ]
     return []
@@ -208,6 +213,7 @@ def _eval_permissive_guest_invites(rule: Rule, data: Dict[str, Any]) -> List[Fin
                 resource_name="Tenant-level",
                 recommendation=rule.recommendation,
                 remediation_available=rule.remediation_available,
+                category=rule.category,
             )
         ]
     return []
@@ -231,6 +237,7 @@ def _eval_multitenant_app(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
                     resource_name=app.get("displayName", "unknown"),
                     recommendation=rule.recommendation,
                     remediation_available=rule.remediation_available,
+                    category=rule.category,
                 )
             )
     return findings
@@ -267,6 +274,7 @@ def _eval_permanent_privileged_role(rule: Rule, data: Dict[str, Any]) -> List[Fi
                     resource_name=principal_name,
                     recommendation=rule.recommendation,
                     remediation_available=rule.remediation_available,
+                    category=rule.category,
                 )
             )
     return findings
