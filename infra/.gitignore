@@ -1,0 +1,18 @@
+# Terraform state and sensitive files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform/
+.terraform.lock.hcl
+
+# Variable files containing secrets
+*.tfvars
+!terraform.tfvars.example
+
+# Plan files
+*.tfplan
+tfplan
+
+# Crash log
+crash.log
+crash.*.log
