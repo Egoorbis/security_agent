@@ -24,9 +24,10 @@ Rule YAML schema
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -54,7 +55,7 @@ class Rule:
     enabled: bool = True
     remediation_available: bool = False
     category: str = ""
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -62,12 +63,12 @@ class Rule:
 # ---------------------------------------------------------------------------
 
 
-def load_rules(path: Path) -> List[Rule]:
+def load_rules(path: Path) -> list[Rule]:
     """Load rules from a YAML file at *path*."""
     with open(path) as fh:
         data = yaml.safe_load(fh)
 
-    rules: List[Rule] = []
+    rules: list[Rule] = []
     for raw in data.get("rules", []):
         if not raw.get("enabled", True):
             continue
@@ -102,8 +103,8 @@ def load_rules(path: Path) -> List[Rule]:
 #
 # where ``tenant_data`` is a plain dict assembled by the RuleEngine.
 
-EvaluatorFn = Callable[[Rule, Dict[str, Any]], List[Finding]]
-_EVALUATORS: Dict[str, EvaluatorFn] = {}
+EvaluatorFn = Callable[[Rule, dict[str, Any]], list[Finding]]
+_EVALUATORS: dict[str, EvaluatorFn] = {}
 
 
 def register_evaluator(name: str) -> Callable[[EvaluatorFn], EvaluatorFn]:
@@ -117,8 +118,8 @@ def register_evaluator(name: str) -> Callable[[EvaluatorFn], EvaluatorFn]:
 
 
 @register_evaluator("user_no_mfa")
-def _eval_user_no_mfa(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
-    findings: List[Finding] = []
+def _eval_user_no_mfa(rule: Rule, data: dict[str, Any]) -> list[Finding]:
+    findings: list[Finding] = []
     for reg in data.get("mfa_registrations", []):
         if not reg.get("isMfaRegistered", True):
             upn = reg.get("userPrincipalName", reg.get("id", "unknown"))
@@ -140,7 +141,7 @@ def _eval_user_no_mfa(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
 
 
 @register_evaluator("no_mfa_ca_policy")
-def _eval_no_mfa_ca_policy(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
+def _eval_no_mfa_ca_policy(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     from ..m365.security import _policy_requires_mfa_for_all_users  # noqa: PLC0415
 
     policies = [
@@ -167,7 +168,7 @@ def _eval_no_mfa_ca_policy(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
 
 
 @register_evaluator("legacy_auth_not_blocked")
-def _eval_legacy_auth_not_blocked(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
+def _eval_legacy_auth_not_blocked(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     from ..m365.security import _policy_blocks_legacy_auth  # noqa: PLC0415
 
     policies = [
@@ -194,7 +195,7 @@ def _eval_legacy_auth_not_blocked(rule: Rule, data: Dict[str, Any]) -> List[Find
 
 
 @register_evaluator("permissive_guest_invites")
-def _eval_permissive_guest_invites(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
+def _eval_permissive_guest_invites(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     policy = data.get("external_collab_settings", {})
     allow_from = policy.get("allowInvitesFrom", "")
     threshold = rule.parameters.get("threshold", "adminsAndGuestInviters")
@@ -220,8 +221,8 @@ def _eval_permissive_guest_invites(rule: Rule, data: Dict[str, Any]) -> List[Fin
 
 
 @register_evaluator("multitenant_app_registration")
-def _eval_multitenant_app(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
-    findings: List[Finding] = []
+def _eval_multitenant_app(rule: Rule, data: dict[str, Any]) -> list[Finding]:
+    findings: list[Finding] = []
     for app in data.get("applications", []):
         if app.get("signInAudience") == "AzureADMultipleOrgs":
             findings.append(
@@ -244,7 +245,7 @@ def _eval_multitenant_app(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
 
 
 @register_evaluator("permanent_privileged_role")
-def _eval_permanent_privileged_role(rule: Rule, data: Dict[str, Any]) -> List[Finding]:
+def _eval_permanent_privileged_role(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     privileged_roles = set(
         rule.parameters.get(
             "privileged_role_ids",
@@ -254,7 +255,7 @@ def _eval_permanent_privileged_role(rule: Rule, data: Dict[str, Any]) -> List[Fi
             ],
         )
     )
-    findings: List[Finding] = []
+    findings: list[Finding] = []
     for assignment in data.get("pim_assignments", []):
         role_def = assignment.get("roleDefinition", {})
         if role_def.get("id", "") in privileged_roles:
@@ -294,17 +295,17 @@ class RuleEngine:
         Pre-loaded list of :class:`Rule` objects.
     """
 
-    def __init__(self, rules: List[Rule]) -> None:
+    def __init__(self, rules: list[Rule]) -> None:
         self._rules = rules
 
     @classmethod
-    def from_yaml(cls, path: Path) -> "RuleEngine":
+    def from_yaml(cls, path: Path) -> RuleEngine:
         """Create a :class:`RuleEngine` from a YAML rules file."""
         return cls(rules=load_rules(path))
 
-    def evaluate(self, tenant_data: Dict[str, Any]) -> List[Finding]:
+    def evaluate(self, tenant_data: dict[str, Any]) -> list[Finding]:
         """Evaluate all rules against *tenant_data* and return findings."""
-        findings: List[Finding] = []
+        findings: list[Finding] = []
         for rule in self._rules:
             evaluator = _EVALUATORS.get(rule.check)
             if evaluator is None:
@@ -324,5 +325,5 @@ class RuleEngine:
         return findings
 
     @property
-    def rules(self) -> List[Rule]:
+    def rules(self) -> list[Rule]:
         return list(self._rules)

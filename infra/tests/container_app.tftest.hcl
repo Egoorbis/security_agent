@@ -8,8 +8,7 @@ variables {
   location            = "eastus"
   container_image     = "acrtest.azurecr.io/m365-security-agent:latest"
   registry_server     = "acrtest.azurecr.io"
-  registry_username   = "acrtest"
-  registry_password   = "supersecretpassword"
+  acr_resource_id     = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.ContainerRegistry/registries/acrtest/repositories/m365-security-agent"
   schedule_cron       = "0 8 * * 1"
   key_vault_id        = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.KeyVault/vaults/kv-test"
   tags = {

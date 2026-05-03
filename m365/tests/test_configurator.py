@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import pytest
-
 from agent.m365.configurator import TenantConfigurator
 from agent.m365.security import Finding, Severity
-
 
 # ---------------------------------------------------------------------------
 # Helpers

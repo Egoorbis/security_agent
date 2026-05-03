@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 
@@ -18,10 +17,10 @@ class M365Config:
     client_id: str
     client_secret: str
     # Optional list of monitored tenant IDs (multi-tenant scenarios)
-    monitored_tenants: List[str] = field(default_factory=list)
+    monitored_tenants: list[str] = field(default_factory=list)
 
     @classmethod
-    def from_env(cls) -> "M365Config":
+    def from_env(cls) -> M365Config:
         """Load M365 config from environment variables."""
         return cls(
             tenant_id=_require_env("AZURE_TENANT_ID"),
@@ -41,7 +40,7 @@ class FoundryConfig:
     model_deployment: str = "gpt-4o"
 
     @classmethod
-    def from_env(cls) -> "FoundryConfig":
+    def from_env(cls) -> FoundryConfig:
         """Load Foundry config from environment variables."""
         return cls(
             endpoint=_require_env("FOUNDRY_ENDPOINT"),
@@ -62,7 +61,7 @@ class AgentConfig:
     report_schedule_cron: str = "0 8 * * 1"  # Monday 08:00 UTC
 
     @classmethod
-    def from_env(cls, rules_path: Optional[Path] = None) -> "AgentConfig":
+    def from_env(cls, rules_path: Path | None = None) -> AgentConfig:
         """Build AgentConfig from environment variables."""
         if rules_path is None:
             rules_path = Path(__file__).parent.parent / "rules" / "default_rules.yaml"
@@ -80,7 +79,7 @@ class AgentConfig:
         )
 
     @classmethod
-    def from_yaml(cls, path: Path) -> "AgentConfig":
+    def from_yaml(cls, path: Path) -> AgentConfig:
         """Load configuration from a YAML file."""
         with open(path) as fh:
             data = yaml.safe_load(fh)
@@ -128,12 +127,12 @@ class AgentConfig:
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
-        raise EnvironmentError(
+        raise OSError(
             f"Required environment variable '{name}' is not set."
         )
     return value
 
 
-def _split_env(name: str, delimiter: str = ",") -> List[str]:
+def _split_env(name: str, delimiter: str = ",") -> list[str]:
     raw = os.environ.get(name, "")
     return [v.strip() for v in raw.split(delimiter) if v.strip()]

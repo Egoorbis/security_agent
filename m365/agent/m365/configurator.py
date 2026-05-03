@@ -9,7 +9,7 @@ referenced by a ``Finding.rule_id``.  The configurator is only called when
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from .graph_client import GraphClient
 from .security import Finding, Severity
@@ -17,7 +17,7 @@ from .security import Finding, Severity
 logger = logging.getLogger(__name__)
 
 # Mapping from rule_id to the configurator method name.
-REMEDIATION_REGISTRY: Dict[str, str] = {
+REMEDIATION_REGISTRY: dict[str, str] = {
     "M365-CA-001": "create_mfa_conditional_access_policy",
     "M365-CA-002": "create_block_legacy_auth_policy",
     "M365-GUEST-001": "restrict_guest_invitations",
@@ -47,13 +47,13 @@ class TenantConfigurator:
     # Orchestration
     # ------------------------------------------------------------------
 
-    def remediate_findings(self, findings: List[Finding]) -> Dict[str, bool]:
+    def remediate_findings(self, findings: list[Finding]) -> dict[str, bool]:
         """Attempt to remediate all actionable findings.
 
         Returns a mapping of ``rule_id -> success`` for each finding that
         has a registered remediation action.
         """
-        results: Dict[str, bool] = {}
+        results: dict[str, bool] = {}
         for finding in findings:
             if not finding.remediation_available:
                 continue
@@ -86,7 +86,7 @@ class TenantConfigurator:
 
     def create_mfa_conditional_access_policy(self, finding: Finding) -> None:  # noqa: ARG002
         """Create a CA policy that requires MFA for all users."""
-        policy: Dict[str, Any] = {
+        policy: dict[str, Any] = {
             "displayName": "Require MFA for all users [Security Agent]",
             "state": "enabledForReportingButNotEnforced",  # audit mode first
             "conditions": {
@@ -108,7 +108,7 @@ class TenantConfigurator:
 
     def create_block_legacy_auth_policy(self, finding: Finding) -> None:  # noqa: ARG002
         """Create a CA policy that blocks legacy authentication."""
-        policy: Dict[str, Any] = {
+        policy: dict[str, Any] = {
             "displayName": "Block legacy authentication [Security Agent]",
             "state": "enabledForReportingButNotEnforced",
             "conditions": {

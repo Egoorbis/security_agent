@@ -9,7 +9,8 @@ in an Azure AI Foundry project and manages the message/run lifecycle.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,9 @@ class FoundryAgentClient:
         self._api_key = api_key
         self._agent_name = agent_name
         self._model_deployment = model_deployment
-        self._agent_id: Optional[str] = None
-        self._client: Optional[Any] = None
-        self._message_handler: Optional[MessageHandler] = None
+        self._agent_id: str | None = None
+        self._client: Any | None = None
+        self._message_handler: MessageHandler | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -133,7 +134,7 @@ class FoundryAgentClient:
                         return part.text.value
         return ""
 
-    def process_event(self, event: Dict[str, Any]) -> Optional[str]:
+    def process_event(self, event: dict[str, Any]) -> str | None:
         """Process an incoming webhook event (e.g. from Teams / Copilot Studio).
 
         Returns the reply string, or ``None`` if the event is not a message.

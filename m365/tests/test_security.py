@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from agent.m365.security import (
     SecurityAssessor,
@@ -13,7 +11,6 @@ from agent.m365.security import (
     _policy_blocks_legacy_auth,
     _policy_requires_mfa_for_all_users,
 )
-
 
 # ---------------------------------------------------------------------------
 # _policy_requires_mfa_for_all_users
@@ -94,7 +91,6 @@ def test_policy_blocks_legacy_auth_wrong_operator():
 
 
 def _make_posture(findings=None, secure_score=60.0, max_score=120.0):
-    from agent.m365.security import Finding
 
     return SecurityPosture(
         tenant_id="tenant-1",

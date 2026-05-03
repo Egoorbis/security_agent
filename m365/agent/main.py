@@ -21,10 +21,8 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Dict
 
 from .config import AgentConfig
 from .foundry.agent_client import FoundryAgentClient
@@ -65,7 +63,7 @@ class SecurityAgent:
             model_deployment=config.foundry.model_deployment,
         )
         # Cache: tenant_id -> SecurityPosture
-        self._postures: Dict = {}
+        self._postures: dict = {}
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -137,9 +135,9 @@ class SecurityAgent:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _collect_tenant_data(self, graph) -> Dict:
+    def _collect_tenant_data(self, graph) -> dict:
         """Gather raw Graph API data for rule evaluation."""
-        data: Dict = {}
+        data: dict = {}
         try:
             data["ca_policies"] = graph.list_conditional_access_policies()
         except Exception:
@@ -228,7 +226,7 @@ def main(argv=None) -> int:
         else:
             rules_path = Path(args.rules) if args.rules else None
             config = AgentConfig.from_env(rules_path=rules_path)
-    except EnvironmentError as exc:
+    except OSError as exc:
         logger.error("Configuration error: %s", exc)
         return 1
 

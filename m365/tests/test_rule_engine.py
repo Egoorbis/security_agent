@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from agent.m365.security import Finding, Severity
-from agent.rules.rule_engine import Rule, RuleEngine, load_rules
-
+from agent.m365.security import Severity
+from agent.rules.rule_engine import RuleEngine, load_rules
 
 # ---------------------------------------------------------------------------
 # Helpers

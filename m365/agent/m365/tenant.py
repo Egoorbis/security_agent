@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 from ..config import M365Config
 from .graph_client import GraphClient
@@ -21,13 +20,13 @@ class TenantMonitor:
 
     def __init__(self, config: M365Config) -> None:
         self._config = config
-        self._cache: Dict[str, SecurityPosture] = {}
+        self._cache: dict[str, SecurityPosture] = {}
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def run_assessment(self, tenant_id: Optional[str] = None) -> SecurityPosture:
+    def run_assessment(self, tenant_id: str | None = None) -> SecurityPosture:
         """Assess the security posture of a single tenant.
 
         If *tenant_id* is ``None``, the home tenant is assessed.
@@ -39,10 +38,10 @@ class TenantMonitor:
         self._cache[effective_tenant] = posture
         return posture
 
-    def run_all_assessments(self) -> Dict[str, SecurityPosture]:
+    def run_all_assessments(self) -> dict[str, SecurityPosture]:
         """Assess all configured tenants and return a mapping of results."""
         tenants = self._config.monitored_tenants or [self._config.tenant_id]
-        results: Dict[str, SecurityPosture] = {}
+        results: dict[str, SecurityPosture] = {}
         for tenant_id in tenants:
             try:
                 results[tenant_id] = self.run_assessment(tenant_id)
@@ -52,12 +51,12 @@ class TenantMonitor:
                 )
         return results
 
-    def get_cached_posture(self, tenant_id: Optional[str] = None) -> Optional[SecurityPosture]:
+    def get_cached_posture(self, tenant_id: str | None = None) -> SecurityPosture | None:
         """Return the most recently cached posture for *tenant_id*."""
         effective_tenant = tenant_id or self._config.tenant_id
         return self._cache.get(effective_tenant)
 
-    def list_tenants(self) -> List[str]:
+    def list_tenants(self) -> list[str]:
         """Return the list of configured tenant IDs."""
         return self._config.monitored_tenants or [self._config.tenant_id]
 

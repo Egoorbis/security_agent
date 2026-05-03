@@ -14,8 +14,7 @@ questions such as:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from datetime import UTC, datetime
 
 from ..m365.security import SecurityPosture, Severity
 
@@ -29,10 +28,10 @@ class SecurityReporter:
 
     def generate_summary(self, posture: SecurityPosture) -> str:
         """Return a concise Markdown summary for *posture*."""
-        lines: List[str] = []
+        lines: list[str] = []
         lines.append(f"## Security Posture Report – {posture.tenant_name}")
         lines.append(
-            f"*Generated at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}*\n"
+            f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n"
         )
 
         # Secure Score
@@ -72,7 +71,7 @@ class SecurityReporter:
 
     def generate_full_report(self, posture: SecurityPosture) -> str:
         """Return a detailed Markdown report listing all findings."""
-        lines: List[str] = [self.generate_summary(posture)]
+        lines: list[str] = [self.generate_summary(posture)]
         lines.append("\n### All Findings\n")
 
         if not posture.findings:
@@ -93,17 +92,17 @@ class SecurityReporter:
         return "\n".join(lines)
 
     def generate_multi_tenant_report(
-        self, postures: Dict[str, SecurityPosture]
+        self, postures: dict[str, SecurityPosture]
     ) -> str:
         """Return a Markdown summary comparing multiple tenant postures."""
-        lines: List[str] = []
+        lines: list[str] = []
         lines.append("## Multi-Tenant Security Posture Report")
         lines.append(
-            f"*Generated at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}*\n"
+            f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n"
         )
         lines.append("| Tenant | Score | Critical | High | Medium | Low |")
         lines.append("|--------|-------|----------|------|--------|-----|")
-        for tenant_id, posture in postures.items():
+        for _tenant_id, posture in postures.items():
             by_sev = posture.findings_by_severity
             score_str = (
                 f"{posture.score_percentage}%"
@@ -131,7 +130,7 @@ class SecurityReporter:
     def handle_query(
         self,
         query: str,
-        postures: Dict[str, SecurityPosture],
+        postures: dict[str, SecurityPosture],
     ) -> str:
         """Process a natural-language chat query and return a response."""
         q = query.strip().lower()
@@ -152,7 +151,7 @@ class SecurityReporter:
 
         # ---- Findings queries --------------------------------------------
         match = re.search(r"(critical|high|medium|low|informational)", q)
-        severity_filter: Optional[Severity] = None
+        severity_filter: Severity | None = None
         if match:
             severity_filter = Severity(match.group(1))
 
@@ -225,7 +224,7 @@ class SecurityReporter:
             "- *Give me a summary report.*"
         )
 
-    def _list_tenants(self, postures: Dict[str, SecurityPosture]) -> str:
+    def _list_tenants(self, postures: dict[str, SecurityPosture]) -> str:
         if not postures:
             return "No tenant assessments are available yet. Run an assessment first."
         lines = ["**Monitored tenants:**\n"]
@@ -273,7 +272,7 @@ def _severity_order(severity: Severity) -> int:
     }.get(severity, 99)
 
 
-def _extract_tenant_name(query: str) -> Optional[str]:
+def _extract_tenant_name(query: str) -> str | None:
     """Extract a tenant name hint from a natural-language query."""
     match = re.search(r"(?:for|tenant|of)\s+['\"]?([a-z0-9\-\. ]+)['\"]?", query)
     if match:
@@ -282,9 +281,9 @@ def _extract_tenant_name(query: str) -> Optional[str]:
 
 
 def _find_posture(
-    name_hint: Optional[str],
-    postures: Dict[str, SecurityPosture],
-) -> Optional[SecurityPosture]:
+    name_hint: str | None,
+    postures: dict[str, SecurityPosture],
+) -> SecurityPosture | None:
     """Find a posture by tenant name/id hint; return first if hint is None."""
     if not postures:
         return None

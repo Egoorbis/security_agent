@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import msal
 import requests
@@ -34,7 +34,7 @@ class GraphClient:
         self._tenant_id = tenant_id
         self._client_id = client_id
         self._client_secret = client_secret
-        self._token: Optional[str] = None
+        self._token: str | None = None
         self._session = requests.Session()
 
     # ------------------------------------------------------------------
@@ -67,23 +67,23 @@ class GraphClient:
     # Generic HTTP helpers
     # ------------------------------------------------------------------
 
-    def _get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    def _get(self, url: str, params: dict[str, Any] | None = None) -> Any:
         """Perform a GET request and return parsed JSON."""
         response = self._session.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
-    def _get_paged(self, url: str) -> List[Dict[str, Any]]:
+    def _get_paged(self, url: str) -> list[dict[str, Any]]:
         """Follow @odata.nextLink pagination and return all items."""
-        items: List[Dict[str, Any]] = []
-        next_url: Optional[str] = url
+        items: list[dict[str, Any]] = []
+        next_url: str | None = url
         while next_url:
             data = self._get(next_url)
             items.extend(data.get("value", []))
             next_url = data.get("@odata.nextLink")
         return items
 
-    def _patch(self, url: str, body: Dict[str, Any]) -> Any:
+    def _patch(self, url: str, body: dict[str, Any]) -> Any:
         """Perform a PATCH request and return parsed JSON (if any)."""
         response = self._session.patch(url, json=body)
         response.raise_for_status()
@@ -91,7 +91,7 @@ class GraphClient:
             return response.json()
         return {}
 
-    def _post(self, url: str, body: Dict[str, Any]) -> Any:
+    def _post(self, url: str, body: dict[str, Any]) -> Any:
         """Perform a POST request and return parsed JSON."""
         response = self._session.post(url, json=body)
         response.raise_for_status()
@@ -101,7 +101,7 @@ class GraphClient:
     # Users
     # ------------------------------------------------------------------
 
-    def list_users(self) -> List[Dict[str, Any]]:
+    def list_users(self) -> list[dict[str, Any]]:
         """Return all users in the tenant."""
         return self._get_paged(
             f"{GRAPH_BASE}/users"
@@ -113,7 +113,7 @@ class GraphClient:
     # Groups
     # ------------------------------------------------------------------
 
-    def list_groups(self) -> List[Dict[str, Any]]:
+    def list_groups(self) -> list[dict[str, Any]]:
         """Return all groups in the tenant."""
         return self._get_paged(f"{GRAPH_BASE}/groups?$select=id,displayName,groupTypes,securityEnabled,mailEnabled")
 
@@ -121,7 +121,7 @@ class GraphClient:
     # Conditional Access
     # ------------------------------------------------------------------
 
-    def list_conditional_access_policies(self) -> List[Dict[str, Any]]:
+    def list_conditional_access_policies(self) -> list[dict[str, Any]]:
         """Return all conditional access policies."""
         return self._get_paged(f"{GRAPH_BASE}/identity/conditionalAccess/policies")
 
@@ -129,17 +129,17 @@ class GraphClient:
     # Security
     # ------------------------------------------------------------------
 
-    def get_secure_score(self) -> Dict[str, Any]:
+    def get_secure_score(self) -> dict[str, Any]:
         """Return the latest Secure Score for the tenant."""
         data = self._get(f"{GRAPH_BASE}/security/secureScores?$top=1")
         scores = data.get("value", [])
         return scores[0] if scores else {}
 
-    def list_secure_score_control_profiles(self) -> List[Dict[str, Any]]:
+    def list_secure_score_control_profiles(self) -> list[dict[str, Any]]:
         """Return all Secure Score control profiles."""
         return self._get_paged(f"{GRAPH_BASE}/security/secureScoreControlProfiles")
 
-    def list_alerts(self, top: int = 50) -> List[Dict[str, Any]]:
+    def list_alerts(self, top: int = 50) -> list[dict[str, Any]]:
         """Return recent security alerts."""
         return self._get_paged(
             f"{GRAPH_BASE}/security/alerts_v2?$top={top}&$orderby=createdDateTime desc"
@@ -149,13 +149,13 @@ class GraphClient:
     # Directory settings
     # ------------------------------------------------------------------
 
-    def get_directory_settings(self) -> List[Dict[str, Any]]:
+    def get_directory_settings(self) -> list[dict[str, Any]]:
         """Return tenant-level directory settings."""
         return self._get_paged(f"{GRAPH_BASE}/settings")
 
     def update_directory_setting(
-        self, setting_id: str, values: List[Dict[str, str]]
-    ) -> Dict[str, Any]:
+        self, setting_id: str, values: list[dict[str, str]]
+    ) -> dict[str, Any]:
         """Update a directory setting."""
         return self._patch(
             f"{GRAPH_BASE}/settings/{setting_id}",
@@ -166,7 +166,7 @@ class GraphClient:
     # Authentication methods policy
     # ------------------------------------------------------------------
 
-    def get_authentication_methods_policy(self) -> Dict[str, Any]:
+    def get_authentication_methods_policy(self) -> dict[str, Any]:
         """Return the authentication methods policy."""
         return self._get(f"{GRAPH_BASE}/policies/authenticationMethodsPolicy")
 
@@ -174,7 +174,7 @@ class GraphClient:
     # MFA / per-user MFA
     # ------------------------------------------------------------------
 
-    def list_per_user_mfa_status(self) -> List[Dict[str, Any]]:
+    def list_per_user_mfa_status(self) -> list[dict[str, Any]]:
         """Return per-user MFA state from the beta endpoint."""
         return self._get_paged(
             f"{GRAPH_BETA}/reports/authenticationMethods/userRegistrationDetails"
@@ -184,11 +184,11 @@ class GraphClient:
     # External collaboration settings
     # ------------------------------------------------------------------
 
-    def get_external_collaboration_settings(self) -> Dict[str, Any]:
+    def get_external_collaboration_settings(self) -> dict[str, Any]:
         """Return external collaboration / guest access settings."""
         return self._get(f"{GRAPH_BASE}/policies/externalIdentitiesPolicy")
 
-    def get_sharepoint_tenant_settings(self) -> Dict[str, Any]:
+    def get_sharepoint_tenant_settings(self) -> dict[str, Any]:
         """Return SharePoint and OneDrive tenant-level sharing settings."""
         return self._get(f"{GRAPH_BETA}/admin/sharepoint/settings")
 
@@ -196,7 +196,7 @@ class GraphClient:
     # Privileged Identity Management
     # ------------------------------------------------------------------
 
-    def list_pim_role_assignments(self) -> List[Dict[str, Any]]:
+    def list_pim_role_assignments(self) -> list[dict[str, Any]]:
         """Return all PIM eligible role assignments."""
         return self._get_paged(
             f"{GRAPH_BETA}/roleManagement/directory/roleEligibilitySchedules"
@@ -207,14 +207,14 @@ class GraphClient:
     # Application registrations
     # ------------------------------------------------------------------
 
-    def list_applications(self) -> List[Dict[str, Any]]:
+    def list_applications(self) -> list[dict[str, Any]]:
         """Return all application registrations."""
         return self._get_paged(
             f"{GRAPH_BASE}/applications?$select=id,displayName,createdDateTime,"
             "signInAudience,requiredResourceAccess"
         )
 
-    def list_service_principals(self) -> List[Dict[str, Any]]:
+    def list_service_principals(self) -> list[dict[str, Any]]:
         """Return all service principals."""
         return self._get_paged(
             f"{GRAPH_BASE}/servicePrincipals?$select=id,displayName,appId,"
@@ -225,7 +225,7 @@ class GraphClient:
     # Tenant information
     # ------------------------------------------------------------------
 
-    def get_organization(self) -> Dict[str, Any]:
+    def get_organization(self) -> dict[str, Any]:
         """Return organization details."""
         data = self._get(
             f"{GRAPH_BASE}/organization?$select=id,displayName,verifiedDomains,"

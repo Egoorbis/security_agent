@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from agent.m365.security import Finding, SecurityPosture, Severity
 from agent.reporting.reporter import SecurityReporter
-
 
 # ---------------------------------------------------------------------------
 # Helpers

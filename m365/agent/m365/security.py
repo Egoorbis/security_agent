@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from .graph_client import GraphClient
 
 logger = logging.getLogger(__name__)
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -34,9 +34,9 @@ class Finding:
     recommendation: str
     remediation_available: bool = False
     category: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "rule_id": self.rule_id,
             "title": self.title,
@@ -57,19 +57,19 @@ class SecurityPosture:
 
     tenant_id: str
     tenant_name: str
-    secure_score: Optional[float]
-    secure_score_max: Optional[float]
-    findings: List[Finding] = field(default_factory=list)
+    secure_score: float | None
+    secure_score_max: float | None
+    findings: list[Finding] = field(default_factory=list)
 
     @property
-    def score_percentage(self) -> Optional[float]:
+    def score_percentage(self) -> float | None:
         if self.secure_score is not None and self.secure_score_max:
             return round(self.secure_score / self.secure_score_max * 100, 1)
         return None
 
     @property
-    def findings_by_severity(self) -> Dict[str, List[Finding]]:
-        result: Dict[str, List[Finding]] = {s.value: [] for s in Severity}
+    def findings_by_severity(self) -> dict[str, list[Finding]]:
+        result: dict[str, list[Finding]] = {s.value: [] for s in Severity}
         for f in self.findings:
             result[f.severity.value].append(f)
         return result
@@ -80,7 +80,7 @@ class SecurityPosture:
     def high_count(self) -> int:
         return len(self.findings_by_severity[Severity.HIGH.value])
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "tenant_id": self.tenant_id,
             "tenant_name": self.tenant_name,
@@ -121,7 +121,7 @@ class SecurityAssessor:
         secure_score = secure_score_data.get("currentScore")
         secure_score_max = secure_score_data.get("maxScore")
 
-        findings: List[Finding] = []
+        findings: list[Finding] = []
         self._check_mfa(findings)
         self._check_conditional_access(findings)
         self._check_external_collaboration(findings)
@@ -147,7 +147,7 @@ class SecurityAssessor:
     # Individual checks
     # ------------------------------------------------------------------
 
-    def _check_mfa(self, findings: List[Finding]) -> None:
+    def _check_mfa(self, findings: list[Finding]) -> None:
         """Identify users without MFA registered."""
         try:
             registrations = self._graph.list_per_user_mfa_status()
@@ -176,7 +176,7 @@ class SecurityAssessor:
                     )
                 )
 
-    def _check_conditional_access(self, findings: List[Finding]) -> None:
+    def _check_conditional_access(self, findings: list[Finding]) -> None:
         """Warn when no enabled CA policy requires MFA for all users."""
         try:
             policies = self._graph.list_conditional_access_policies()
@@ -212,7 +212,7 @@ class SecurityAssessor:
                 )
             )
 
-    def _check_external_collaboration(self, findings: List[Finding]) -> None:
+    def _check_external_collaboration(self, findings: list[Finding]) -> None:
         """Flag permissive guest / external collaboration settings."""
         try:
             policy = self._graph.get_external_collaboration_settings()
@@ -249,7 +249,7 @@ class SecurityAssessor:
                 )
             )
 
-    def _check_app_registrations(self, findings: List[Finding]) -> None:
+    def _check_app_registrations(self, findings: list[Finding]) -> None:
         """Detect app registrations with overly broad API permissions."""
         try:
             applications = self._graph.list_applications()
@@ -258,14 +258,9 @@ class SecurityAssessor:
             return
 
         # Flag apps that request any .ReadWrite.All or .FullControl permissions
-        danger_patterns = [
-            ".ReadWrite.All",
-            ".FullControl",
-            "Directory.ReadWrite.All",
-            "Mail.ReadWrite",
-        ]
+        # (danger_patterns used in full impl for GUID→name resolution via service principals)
         for app in applications:
-            required: List[Dict[str, Any]] = app.get("requiredResourceAccess", [])
+            required: list[dict[str, Any]] = app.get("requiredResourceAccess", [])
             for rra in required:
                 for access in rra.get("resourceAccess", []):
                     scope = access.get("id", "")
@@ -300,7 +295,7 @@ class SecurityAssessor:
                     )
                 )
 
-    def _check_legacy_auth(self, findings: List[Finding]) -> None:
+    def _check_legacy_auth(self, findings: list[Finding]) -> None:
         """Warn when no CA policy blocks legacy authentication protocols."""
         try:
             policies = self._graph.list_conditional_access_policies()
@@ -336,7 +331,7 @@ class SecurityAssessor:
                 )
             )
 
-    def _check_privileged_roles(self, findings: List[Finding]) -> None:
+    def _check_privileged_roles(self, findings: list[Finding]) -> None:
         """Identify permanently assigned privileged roles (non-PIM)."""
         try:
             assignments = self._graph.list_pim_role_assignments()
@@ -386,7 +381,7 @@ class SecurityAssessor:
 # ---------------------------------------------------------------------------
 
 
-def _policy_requires_mfa_for_all_users(policy: Dict[str, Any]) -> bool:
+def _policy_requires_mfa_for_all_users(policy: dict[str, Any]) -> bool:
     conditions = policy.get("conditions", {})
     users = conditions.get("users", {})
     include_users = users.get("includeUsers", [])
@@ -395,7 +390,7 @@ def _policy_requires_mfa_for_all_users(policy: Dict[str, Any]) -> bool:
     return "All" in include_users and "mfa" in built_in
 
 
-def _policy_blocks_legacy_auth(policy: Dict[str, Any]) -> bool:
+def _policy_blocks_legacy_auth(policy: dict[str, Any]) -> bool:
     conditions = policy.get("conditions", {})
     client_app_types = conditions.get("clientAppTypes", [])
     grant_controls = policy.get("grantControls") or {}
