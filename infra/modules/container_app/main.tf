@@ -42,6 +42,12 @@ resource "azurerm_role_assignment" "kv_secrets_user" {
   principal_id         = azurerm_user_assigned_identity.agent.principal_id
 }
 
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = var.acr_resource_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.agent.principal_id
+}
+
 # ---------------------------------------------------------------------------
 # Container App Job – runs the security assessment on a cron schedule
 # ---------------------------------------------------------------------------
@@ -67,9 +73,8 @@ resource "azurerm_container_app_job" "agent" {
   }
 
   registry {
-    server               = var.registry_server
-    username             = var.registry_username
-    password_secret_name = "acr-password"
+    server   = var.registry_server
+    identity = azurerm_user_assigned_identity.agent.id
   }
 
   template {
@@ -99,11 +104,7 @@ resource "azurerm_container_app_job" "agent" {
     }
   }
 
-  # ACR password secret
-  secret {
-    name  = "acr-password"
-    value = var.registry_password
-  }
+  # ACR pull uses managed identity (ABAC) — no password secret needed
 
   # Secrets pulled from Key Vault via managed identity
   dynamic "secret" {
@@ -117,5 +118,8 @@ resource "azurerm_container_app_job" "agent" {
 
   tags = var.tags
 
-  depends_on = [azurerm_role_assignment.kv_secrets_user]
+  depends_on = [
+    azurerm_role_assignment.kv_secrets_user,
+    azurerm_role_assignment.acr_pull,
+  ]
 }

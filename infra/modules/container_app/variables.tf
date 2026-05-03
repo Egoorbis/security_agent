@@ -25,22 +25,15 @@ variable "container_image" {
   type        = string
 }
 
-# Registry credentials
+# Registry
 variable "registry_server" {
   description = "Container registry login server."
   type        = string
 }
 
-variable "registry_username" {
-  description = "Registry admin username."
+variable "acr_resource_id" {
+  description = "Resource ID of the existing Azure Container Registry (used to assign AcrPull to the managed identity)."
   type        = string
-  sensitive   = true
-}
-
-variable "registry_password" {
-  description = "Registry admin password."
-  type        = string
-  sensitive   = true
 }
 
 # Scheduling

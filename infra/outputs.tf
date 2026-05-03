@@ -5,7 +5,7 @@ output "resource_group_name" {
 
 output "container_registry_login_server" {
   description = "Login server URL for the Azure Container Registry."
-  value       = module.container_registry.login_server
+  value       = data.azurerm_container_registry.existing.login_server
 }
 
 output "key_vault_uri" {
@@ -35,5 +35,5 @@ output "container_app_environment_id" {
 
 output "docker_push_command" {
   description = "Example docker push command for the agent image."
-  value       = "docker push ${module.container_registry.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
+  value       = "docker push ${data.azurerm_container_registry.existing.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
 }

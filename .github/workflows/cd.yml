@@ -14,18 +14,25 @@ permissions:
   contents: read
 
 # ---------------------------------------------------------------------------
-# Environment-level secrets expected:
+# Secrets expected (configured in repo / environment settings):
 #
 #   AZURE_CLIENT_ID          – service principal / federated credential client ID
 #   AZURE_TENANT_ID          – Entra ID tenant ID
 #   AZURE_SUBSCRIPTION_ID    – target subscription
-#   TF_STATE_RESOURCE_GROUP  – resource group holding the Terraform state SA
-#   TF_STATE_STORAGE_ACCOUNT – storage account name for TF state
-#   TF_STATE_CONTAINER       – blob container name
-#   TF_STATE_KEY             – blob key (e.g. m365-security-agent.tfstate)
+#   BACKEND_RESOURCE_GROUP   – resource group holding the Terraform state SA
+#   BACKEND_STORAGE_ACCOUNT  – storage account name for TF state
+#   BACKEND_CONTAINER_NAME   – blob container name
+#   BACKEND_KEY              – blob key (e.g. m365-security-agent.tfstate)
 #   M365_CLIENT_ID           – Entra app registration client ID for the agent
 #   M365_CLIENT_SECRET       – app registration client secret
-#   FOUNDRY_API_KEY          – Azure OpenAI / Foundry API key
+#
+# Repository variables expected:
+#   TF_PREFIX        – resource name prefix (e.g. m365agent)
+#   TF_ENVIRONMENT   – deployment environment (e.g. production)
+#   ACR_NAME         – name of the existing Container Registry (e.g. metrreg)
+#   ACR_LOGIN_SERVER – login server of the existing registry
+#                      (e.g. metrreg-g3f3hxgzfbfkfxhk.azurecr.io)
+#   ACR_RESOURCE_GROUP – resource group that contains the registry
 # ---------------------------------------------------------------------------
 
 env:
@@ -65,66 +72,12 @@ jobs:
         run: pytest tests/ --tb=short -q
 
   # ---------------------------------------------------------------------------
-  # 2. Build and push Docker image to ACR
-  # ---------------------------------------------------------------------------
-  docker-build-push:
-    name: "Docker – build & push"
-    runs-on: ubuntu-latest
-    needs: python-test
-    outputs:
-      image_tag: ${{ steps.meta.outputs.version }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Get ACR login server
-        id: acr
-        run: |
-          LOGIN_SERVER=$(az acr list \
-            --resource-group "rg-${{ vars.TF_PREFIX }}-${{ vars.TF_ENVIRONMENT }}" \
-            --query "[0].loginServer" -o tsv)
-          echo "login_server=${LOGIN_SERVER}" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to ACR
-        run: az acr login --name "${{ steps.acr.outputs.login_server }}"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.acr.outputs.login_server }}/m365-security-agent
-          tags: |
-            type=sha,prefix=,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: m365/
-          file: m365/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ---------------------------------------------------------------------------
-  # 3. Terraform plan
+  # 2. Terraform plan
   # ---------------------------------------------------------------------------
   terraform-plan:
     name: "Terraform – plan"
     runs-on: ubuntu-latest
-    needs: docker-build-push
+    needs: python-test
     environment: plan
 
     defaults:
@@ -149,10 +102,10 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
-            -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
-            -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}"
+            -backend-config="resource_group_name=${{ secrets.BACKEND_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.BACKEND_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.BACKEND_CONTAINER_NAME }}" \
+            -backend-config="key=${{ secrets.BACKEND_KEY }}"
 
       - name: Terraform Validate
         run: terraform validate
@@ -164,8 +117,8 @@ jobs:
             -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -var="m365_client_id=${{ secrets.M365_CLIENT_ID }}" \
             -var="m365_client_secret=${{ secrets.M365_CLIENT_SECRET }}" \
-            -var="foundry_api_key=${{ secrets.FOUNDRY_API_KEY }}" \
-            -var="agent_image_tag=${{ needs.docker-build-push.outputs.image_tag }}" \
+            -var="acr_name=${{ vars.ACR_NAME }}" \
+            -var="acr_resource_group_name=${{ vars.ACR_RESOURCE_GROUP }}" \
             -var="prefix=${{ vars.TF_PREFIX }}" \
             -var="environment=${{ vars.TF_ENVIRONMENT }}" \
             -out=tfplan
@@ -183,7 +136,7 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------------------
-  # 4. Terraform apply (requires approval via GitHub Environments)
+  # 3. Terraform apply (requires approval via GitHub Environments)
   # ---------------------------------------------------------------------------
   terraform-apply:
     name: "Terraform – apply"
@@ -213,10 +166,10 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
-            -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
-            -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}"
+            -backend-config="resource_group_name=${{ secrets.BACKEND_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.BACKEND_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.BACKEND_CONTAINER_NAME }}" \
+            -backend-config="key=${{ secrets.BACKEND_KEY }}"
 
       - name: Download Terraform plan
         uses: actions/download-artifact@v4
@@ -231,3 +184,48 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: "true"
+
+  # ---------------------------------------------------------------------------
+  # 4. Build and push Docker image to ACR
+  #    Runs after Terraform apply so the registry and AcrPush assignment exist.
+  # ---------------------------------------------------------------------------
+  docker-build-push:
+    name: "Docker – build & push"
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to ACR (OIDC – no admin credentials)
+        run: az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.ACR_LOGIN_SERVER }}/m365-security-agent
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: m365/
+          file: m365/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

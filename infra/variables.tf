@@ -57,18 +57,18 @@ variable "tags" {
 }
 
 # ---------------------------------------------------------------------------
-# Container Registry
+# Container Registry (pre-existing, ABAC-enabled)
 # ---------------------------------------------------------------------------
 
-variable "acr_sku" {
-  description = "ACR SKU tier: Basic | Standard | Premium."
+variable "acr_name" {
+  description = "Name of the existing Azure Container Registry."
   type        = string
-  default     = "Standard"
+  default     = "metrreg"
+}
 
-  validation {
-    condition     = contains(["Basic", "Standard", "Premium"], var.acr_sku)
-    error_message = "acr_sku must be Basic, Standard, or Premium."
-  }
+variable "acr_resource_group_name" {
+  description = "Resource group that contains the existing Azure Container Registry."
+  type        = string
 }
 
 # ---------------------------------------------------------------------------

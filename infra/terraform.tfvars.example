@@ -8,8 +8,9 @@ prefix      = "m365agent"
 environment = "production"
 location    = "eastus"
 
-# ACR
-acr_sku = "Standard"
+# Container Registry (pre-existing, ABAC-enabled)
+acr_name                = "metrreg"
+acr_resource_group_name = "REPLACE_WITH_ACR_RESOURCE_GROUP"
 
 # Agent image
 agent_image_name = "m365-security-agent"
@@ -22,7 +23,7 @@ m365_client_secret = "REPLACE_ME"
 monitored_tenant_ids = []
 
 # Azure AI Foundry / OpenAI
-foundry_api_key          = "REPLACE_ME"
+# Note: foundry_api_key is auto-wired from the deployed Azure OpenAI account.
 foundry_agent_name       = "m365-security-agent"
 foundry_model_deployment = "gpt-4o"
 ai_foundry_location      = "eastus"

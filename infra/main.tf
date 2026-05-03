@@ -6,7 +6,7 @@ locals {
     project     = "m365-security-agent"
   })
 
-  # Unique suffix to avoid global name collisions (ACR, Key Vault)
+  # Unique suffix to avoid global name collisions (Key Vault)
   name_suffix = random_string.suffix.result
 }
 
@@ -15,6 +15,8 @@ resource "random_string" "suffix" {
   special = false
   upper   = false
 }
+
+data "azurerm_client_config" "current" {}
 
 # ---------------------------------------------------------------------------
 # Resource Group
@@ -46,17 +48,19 @@ module "key_vault" {
 }
 
 # ---------------------------------------------------------------------------
-# Container Registry – stores the agent Docker image
+# Container Registry – pre-existing registry (ABAC / admin disabled)
 # ---------------------------------------------------------------------------
 
-module "container_registry" {
-  source = "./modules/container_registry"
+data "azurerm_container_registry" "existing" {
+  name                = var.acr_name
+  resource_group_name = var.acr_resource_group_name
+}
 
-  name                = "acr${var.prefix}${local.name_suffix}"
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
-  sku                 = var.acr_sku
-  tags                = local.common_tags
+# Grant the CI/CD service principal permission to push images
+resource "azurerm_role_assignment" "acr_push" {
+  scope                = data.azurerm_container_registry.existing.id
+  role_definition_name = "AcrPush"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 # ---------------------------------------------------------------------------
@@ -86,12 +90,11 @@ module "container_app" {
   tags                = local.common_tags
 
   # Docker image published by the CD pipeline
-  container_image = "${module.container_registry.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
+  container_image = "${data.azurerm_container_registry.existing.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
 
-  # Registry pull credentials
-  registry_server   = module.container_registry.login_server
-  registry_username = module.container_registry.admin_username
-  registry_password = module.container_registry.admin_password
+  # Registry pull uses managed identity (ABAC) – no admin credentials
+  registry_server = data.azurerm_container_registry.existing.login_server
+  acr_resource_id = data.azurerm_container_registry.existing.id
 
   # Cron expression for scheduled assessments (default: Monday 08:00 UTC)
   schedule_cron = var.assessment_schedule_cron
