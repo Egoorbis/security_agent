@@ -41,7 +41,7 @@ module "key_vault" {
 
   secrets = {
     "azure-client-secret" = var.m365_client_secret
-    "foundry-api-key"     = var.foundry_api_key
+    "foundry-api-key"     = module.ai_foundry.primary_access_key
   }
 }
 

@@ -112,12 +112,6 @@ variable "monitored_tenant_ids" {
 # Azure AI Foundry / OpenAI
 # ---------------------------------------------------------------------------
 
-variable "foundry_api_key" {
-  description = "API key for the Azure OpenAI / AI Foundry account."
-  type        = string
-  sensitive   = true
-}
-
 variable "foundry_agent_name" {
   description = "Display name for the Foundry agent."
   type        = string
