@@ -152,3 +152,70 @@ def test_query_empty_postures():
     reporter = SecurityReporter()
     reply = reporter.handle_query("Show me findings", {})
     assert "No tenant" in reply or "not available" in reply.lower()
+
+
+def test_query_score_no_matching_tenant():
+    """Score query with a tenant hint that matches nothing returns tenant list."""
+    postures = {"t1": _make_posture(name="Contoso")}
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("What is the score for fabrikam?", postures)
+    # Should fall back to listing tenants
+    assert "Contoso" in reply or "Monitored" in reply
+
+
+def test_query_score_unavailable_for_known_tenant():
+    """Score query returns 'not available' message when secure_score is None."""
+    posture = _make_posture(score=None, max_score=None)
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("What is the security score?", {"t1": posture})
+    assert "not available" in reply.lower()
+
+
+def test_query_findings_more_than_ten(capsys):
+    """When there are more than 10 findings, '...and N more' text is appended."""
+    from agent.m365.security import Severity
+
+    findings = [_make_finding(f"R-{i:03}", Severity.HIGH) for i in range(15)]
+    reporter = SecurityReporter()
+    reply = reporter.handle_query(
+        "Show me high findings", {"t1": _make_posture(findings=findings)}
+    )
+    assert "more" in reply
+
+
+def test_query_mfa_no_matching_tenant():
+    """MFA query with unmatched tenant hint returns tenant list."""
+    postures = {"t1": _make_posture(name="Contoso")}
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("How many users are missing MFA for fabrikam?", postures)
+    assert "Contoso" in reply or "Monitored" in reply
+
+
+def test_query_mfa_no_findings():
+    """MFA query when tenant has no MFA-category findings."""
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("How many users are missing MFA?", {"t1": _make_posture()})
+    assert "No MFA" in reply or "no mfa" in reply.lower()
+
+
+def test_query_summary_multiple_tenants_with_hint():
+    """Summary query with a matching tenant hint returns that tenant's summary."""
+    postures = {
+        "t1": _make_posture(name="Contoso"),
+        "t2": _make_posture(name="Fabrikam"),
+    }
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("Give me a summary for contoso", postures)
+    assert "Contoso" in reply
+
+
+def test_query_summary_multiple_tenants_no_match():
+    """Summary query with no tenant match returns multi-tenant report."""
+    postures = {
+        "t1": _make_posture(name="Contoso"),
+        "t2": _make_posture(name="Fabrikam"),
+    }
+    reporter = SecurityReporter()
+    reply = reporter.handle_query("Give me a summary for unknown corp", postures)
+    # Falls back to multi-tenant report
+    assert "Contoso" in reply or "Fabrikam" in reply

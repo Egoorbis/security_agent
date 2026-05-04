@@ -203,3 +203,103 @@ def test_assessor_handles_graph_error_gracefully():
     # Should not raise; MFA check is skipped
     posture = assessor.assess()
     assert isinstance(posture, SecurityPosture)
+
+
+def test_assessor_ca_exception_skipped():
+    graph = _mock_graph()
+    graph.list_conditional_access_policies.side_effect = Exception("403 Forbidden")
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    assert isinstance(posture, SecurityPosture)
+    assert not any(f.rule_id == "M365-CA-001" for f in posture.findings)
+
+
+def test_assessor_external_collab_exception_skipped():
+    graph = _mock_graph()
+    graph.get_external_collaboration_settings.side_effect = Exception("Error")
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    assert not any(f.rule_id == "M365-GUEST-001" for f in posture.findings)
+
+
+def test_assessor_app_registrations_exception_skipped():
+    graph = _mock_graph()
+    graph.list_applications.side_effect = Exception("Error")
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    assert not any(f.rule_id == "M365-APP-001" for f in posture.findings)
+
+
+def test_assessor_app_registration_multitenant_finding():
+    graph = _mock_graph()
+    graph.list_applications.return_value = [
+        {
+            "id": "app-1",
+            "displayName": "My App",
+            "signInAudience": "AzureADMultipleOrgs",
+            "requiredResourceAccess": [],
+        }
+    ]
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    app_findings = [f for f in posture.findings if f.rule_id == "M365-APP-001"]
+    assert len(app_findings) == 1
+    assert app_findings[0].resource_name == "My App"
+
+
+def test_assessor_legacy_auth_exception_skipped():
+    graph = _mock_graph()
+    graph.list_conditional_access_policies.side_effect = Exception("Error")
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    assert not any(f.rule_id == "M365-CA-002" for f in posture.findings)
+
+
+def test_assessor_privileged_roles_exception_skipped():
+    graph = _mock_graph()
+    graph.list_pim_role_assignments.side_effect = Exception("Error")
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    assert not any(f.rule_id == "M365-PIM-001" for f in posture.findings)
+
+
+def test_assessor_privileged_role_finding():
+    graph = _mock_graph()
+    global_admin_role_id = "62e90394-69f5-4237-9190-012177145e10"
+    graph.list_pim_role_assignments.return_value = [
+        {
+            "id": "assign-1",
+            "roleDefinition": {
+                "id": global_admin_role_id,
+                "displayName": "Global Administrator",
+            },
+            "principal": {"id": "user-1", "displayName": "Alice"},
+        }
+    ]
+    assessor = SecurityAssessor(graph)
+    posture = assessor.assess()
+    pim_findings = [f for f in posture.findings if f.rule_id == "M365-PIM-001"]
+    assert len(pim_findings) == 1
+    assert "Alice" in pim_findings[0].resource_name
+
+
+def test_finding_to_dict():
+    from agent.m365.security import Finding
+
+    f = Finding(
+        rule_id="X-001",
+        title="Title",
+        description="Desc",
+        severity=Severity.HIGH,
+        resource_type="Tenant",
+        resource_id="t1",
+        resource_name="Contoso",
+        recommendation="Fix it.",
+        remediation_available=True,
+        metadata={"key": "value"},
+    )
+    d = f.to_dict()
+    assert d["rule_id"] == "X-001"
+    assert d["severity"] == "high"
+    assert d["remediation_available"] is True
+    assert d["metadata"] == {"key": "value"}
