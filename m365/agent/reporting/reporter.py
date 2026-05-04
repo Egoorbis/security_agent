@@ -30,9 +30,7 @@ class SecurityReporter:
         """Return a concise Markdown summary for *posture*."""
         lines: list[str] = []
         lines.append(f"## Security Posture Report – {posture.tenant_name}")
-        lines.append(
-            f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n"
-        )
+        lines.append(f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n")
 
         # Secure Score
         if posture.score_percentage is not None:
@@ -56,9 +54,7 @@ class SecurityReporter:
             lines.append(f"| {emoji} {sev.value.capitalize()} | {count} |")
 
         # Critical & high findings detail
-        critical_high = (
-            by_sev[Severity.CRITICAL.value] + by_sev[Severity.HIGH.value]
-        )
+        critical_high = by_sev[Severity.CRITICAL.value] + by_sev[Severity.HIGH.value]
         if critical_high:
             lines.append("\n### Critical & High Findings\n")
             for f in critical_high:
@@ -91,23 +87,17 @@ class SecurityReporter:
 
         return "\n".join(lines)
 
-    def generate_multi_tenant_report(
-        self, postures: dict[str, SecurityPosture]
-    ) -> str:
+    def generate_multi_tenant_report(self, postures: dict[str, SecurityPosture]) -> str:
         """Return a Markdown summary comparing multiple tenant postures."""
         lines: list[str] = []
         lines.append("## Multi-Tenant Security Posture Report")
-        lines.append(
-            f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n"
-        )
+        lines.append(f"*Generated at {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}*\n")
         lines.append("| Tenant | Score | Critical | High | Medium | Low |")
         lines.append("|--------|-------|----------|------|--------|-----|")
         for _tenant_id, posture in postures.items():
             by_sev = posture.findings_by_severity
             score_str = (
-                f"{posture.score_percentage}%"
-                if posture.score_percentage is not None
-                else "N/A"
+                f"{posture.score_percentage}%" if posture.score_percentage is not None else "N/A"
             )
             lines.append(
                 f"| {posture.tenant_name} | {score_str} "
@@ -162,9 +152,7 @@ class SecurityReporter:
                 return self._list_tenants(postures)
             findings = posture.findings
             if severity_filter:
-                findings = [
-                    f for f in findings if f.severity == severity_filter
-                ]
+                findings = [f for f in findings if f.severity == severity_filter]
             if not findings:
                 return (
                     f"✅ No {'`' + severity_filter.value + '`' if severity_filter else ''} "
@@ -230,9 +218,7 @@ class SecurityReporter:
         lines = ["**Monitored tenants:**\n"]
         for posture in postures.values():
             score_str = (
-                f"{posture.score_percentage}%"
-                if posture.score_percentage is not None
-                else "N/A"
+                f"{posture.score_percentage}%" if posture.score_percentage is not None else "N/A"
             )
             lines.append(
                 f"- **{posture.tenant_name}** (`{posture.tenant_id}`) – "

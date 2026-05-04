@@ -110,9 +110,7 @@ def test_query_findings():
 
 def test_query_no_findings():
     reporter = SecurityReporter()
-    reply = reporter.handle_query(
-        "Show me critical findings", {"t1": _make_posture(findings=[])}
-    )
+    reply = reporter.handle_query("Show me critical findings", {"t1": _make_posture(findings=[])})
     assert "No" in reply
 
 

@@ -48,9 +48,7 @@ class GraphClient:
             client_credential=self._client_secret,
             authority=f"https://login.microsoftonline.com/{self._tenant_id}",
         )
-        result = app.acquire_token_for_client(
-            scopes=["https://graph.microsoft.com/.default"]
-        )
+        result = app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
         if "access_token" not in result:
             error = result.get("error_description", result.get("error", "Unknown"))
             raise GraphAuthError(f"Failed to acquire Graph token: {error}")
@@ -115,7 +113,9 @@ class GraphClient:
 
     def list_groups(self) -> list[dict[str, Any]]:
         """Return all groups in the tenant."""
-        return self._get_paged(f"{GRAPH_BASE}/groups?$select=id,displayName,groupTypes,securityEnabled,mailEnabled")
+        return self._get_paged(
+            f"{GRAPH_BASE}/groups?$select=id,displayName,groupTypes,securityEnabled,mailEnabled"
+        )
 
     # ------------------------------------------------------------------
     # Conditional Access

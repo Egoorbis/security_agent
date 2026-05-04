@@ -155,9 +155,7 @@ def _mock_graph():
         {"id": "u2", "userPrincipalName": "bob@contoso.com", "isMfaRegistered": True},
     ]
     g.list_conditional_access_policies.return_value = []
-    g.get_external_collaboration_settings.return_value = {
-        "allowInvitesFrom": "everyone"
-    }
+    g.get_external_collaboration_settings.return_value = {"allowInvitesFrom": "everyone"}
     g.list_applications.return_value = []
     g.list_pim_role_assignments.return_value = []
     return g

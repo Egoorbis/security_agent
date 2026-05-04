@@ -144,11 +144,7 @@ def _eval_user_no_mfa(rule: Rule, data: dict[str, Any]) -> list[Finding]:
 def _eval_no_mfa_ca_policy(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     from ..m365.security import _policy_requires_mfa_for_all_users  # noqa: PLC0415
 
-    policies = [
-        p
-        for p in data.get("ca_policies", [])
-        if p.get("state") == "enabled"
-    ]
+    policies = [p for p in data.get("ca_policies", []) if p.get("state") == "enabled"]
     if not any(_policy_requires_mfa_for_all_users(p) for p in policies):
         return [
             Finding(
@@ -171,11 +167,7 @@ def _eval_no_mfa_ca_policy(rule: Rule, data: dict[str, Any]) -> list[Finding]:
 def _eval_legacy_auth_not_blocked(rule: Rule, data: dict[str, Any]) -> list[Finding]:
     from ..m365.security import _policy_blocks_legacy_auth  # noqa: PLC0415
 
-    policies = [
-        p
-        for p in data.get("ca_policies", [])
-        if p.get("state") == "enabled"
-    ]
+    policies = [p for p in data.get("ca_policies", []) if p.get("state") == "enabled"]
     if not any(_policy_blocks_legacy_auth(p) for p in policies):
         return [
             Finding(
@@ -201,7 +193,11 @@ def _eval_permissive_guest_invites(rule: Rule, data: dict[str, Any]) -> list[Fin
     threshold = rule.parameters.get("threshold", "adminsAndGuestInviters")
     permissive_values = {"everyone", "adminsAndGuestInviters"}
     if threshold == "adminsOnly":
-        permissive_values = {"everyone", "adminsAndGuestInviters", "adminsGuestInvitersAndAllMembers"}
+        permissive_values = {
+            "everyone",
+            "adminsAndGuestInviters",
+            "adminsGuestInvitersAndAllMembers",
+        }
     if allow_from in permissive_values:
         return [
             Finding(
@@ -229,9 +225,7 @@ def _eval_multitenant_app(rule: Rule, data: dict[str, Any]) -> list[Finding]:
                 Finding(
                     rule_id=rule.id,
                     title=rule.title,
-                    description=rule.description.format(
-                        app=app.get("displayName", "unknown")
-                    ),
+                    description=rule.description.format(app=app.get("displayName", "unknown")),
                     severity=rule.severity,
                     resource_type=rule.resource_type,
                     resource_id=app.get("id", "unknown"),
@@ -266,9 +260,7 @@ def _eval_permanent_privileged_role(rule: Rule, data: dict[str, Any]) -> list[Fi
                 Finding(
                     rule_id=rule.id,
                     title=rule.title.format(role=role_name),
-                    description=rule.description.format(
-                        principal=principal_name, role=role_name
-                    ),
+                    description=rule.description.format(principal=principal_name, role=role_name),
                     severity=rule.severity,
                     resource_type=rule.resource_type,
                     resource_id=assignment.get("id", "unknown"),
@@ -319,9 +311,7 @@ class RuleEngine:
                 new_findings = evaluator(rule, tenant_data)
                 findings.extend(new_findings)
             except Exception as exc:
-                logger.error(
-                    "Error evaluating rule '%s': %s", rule.id, exc
-                )
+                logger.error("Error evaluating rule '%s': %s", rule.id, exc)
         return findings
 
     @property

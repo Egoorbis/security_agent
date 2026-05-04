@@ -111,9 +111,7 @@ def test_legacy_auth_blocked_suppresses_finding():
 
 def test_permissive_guest_invites_fires_for_everyone():
     engine = RuleEngine.from_yaml(RULES_YAML)
-    data = _make_tenant_data(
-        external_collab_settings={"allowInvitesFrom": "everyone"}
-    )
+    data = _make_tenant_data(external_collab_settings={"allowInvitesFrom": "everyone"})
     findings = engine.evaluate(data)
     rule_ids = [f.rule_id for f in findings]
     assert "M365-GUEST-001" in rule_ids
@@ -121,9 +119,7 @@ def test_permissive_guest_invites_fires_for_everyone():
 
 def test_permissive_guest_invites_suppressed_for_admins_only():
     engine = RuleEngine.from_yaml(RULES_YAML)
-    data = _make_tenant_data(
-        external_collab_settings={"allowInvitesFrom": "adminsOnly"}
-    )
+    data = _make_tenant_data(external_collab_settings={"allowInvitesFrom": "adminsOnly"})
     findings = engine.evaluate(data)
     rule_ids = [f.rule_id for f in findings]
     assert "M365-GUEST-001" not in rule_ids

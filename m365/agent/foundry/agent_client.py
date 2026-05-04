@@ -78,8 +78,7 @@ class FoundryAgentClient:
             )
         except ImportError:
             logger.warning(
-                "azure-ai-projects SDK not installed. "
-                "Running in standalone (non-Foundry) mode."
+                "azure-ai-projects SDK not installed. Running in standalone (non-Foundry) mode."
             )
 
     def _register_agent(self) -> str:
@@ -102,6 +101,7 @@ class FoundryAgentClient:
         """Create a new conversation thread and return its ID."""
         if self._client is None:
             import uuid
+
             return str(uuid.uuid4())
         thread = self._client.agents.create_thread()
         return thread.id

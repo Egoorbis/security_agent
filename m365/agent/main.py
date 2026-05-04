@@ -123,10 +123,7 @@ class SecurityAgent:
         """Handle an incoming chat message and return a response."""
         logger.debug("Thread '%s' – user: %s", thread_id, user_message)
         if not self._postures:
-            return (
-                "No assessment data available yet. "
-                "Run an assessment first (e.g., `assess`)."
-            )
+            return "No assessment data available yet. Run an assessment first (e.g., `assess`)."
         reply = self._reporter.handle_query(user_message, self._postures)
         logger.debug("Thread '%s' – agent: %s", thread_id, reply[:120])
         return reply
@@ -147,9 +144,7 @@ class SecurityAgent:
         except Exception:
             data["mfa_registrations"] = []
         try:
-            data["external_collab_settings"] = (
-                graph.get_external_collaboration_settings()
-            )
+            data["external_collab_settings"] = graph.get_external_collaboration_settings()
         except Exception:
             data["external_collab_settings"] = {}
         try:
@@ -242,9 +237,7 @@ def main(argv=None) -> int:
             print(reporter.generate_full_report(posture))
 
     if args.configure_tenant:
-        msg = agent.configure_new_tenant(
-            args.configure_tenant, dry_run=not args.live
-        )
+        msg = agent.configure_new_tenant(args.configure_tenant, dry_run=not args.live)
         print(msg)
 
     if args.interactive:

@@ -46,9 +46,7 @@ class TenantMonitor:
             try:
                 results[tenant_id] = self.run_assessment(tenant_id)
             except Exception as exc:
-                logger.error(
-                    "Assessment failed for tenant '%s': %s", tenant_id, exc
-                )
+                logger.error("Assessment failed for tenant '%s': %s", tenant_id, exc)
         return results
 
     def get_cached_posture(self, tenant_id: str | None = None) -> SecurityPosture | None:

@@ -88,9 +88,7 @@ class SecurityPosture:
             "secure_score_max": self.secure_score_max,
             "score_percentage": self.score_percentage,
             "findings_count": len(self.findings),
-            "findings_by_severity": {
-                k: len(v) for k, v in self.findings_by_severity.items()
-            },
+            "findings_by_severity": {k: len(v) for k, v in self.findings_by_severity.items()},
             "findings": [f.to_dict() for f in self.findings],
         }
 
@@ -184,12 +182,8 @@ class SecurityAssessor:
             logger.warning("Could not retrieve Conditional Access policies: %s", exc)
             return
 
-        enabled_policies = [
-            p for p in policies if p.get("state") == "enabled"
-        ]
-        mfa_for_all = any(
-            _policy_requires_mfa_for_all_users(p) for p in enabled_policies
-        )
+        enabled_policies = [p for p in policies if p.get("state") == "enabled"]
+        mfa_for_all = any(_policy_requires_mfa_for_all_users(p) for p in enabled_policies)
         if not mfa_for_all:
             findings.append(
                 Finding(
@@ -217,9 +211,7 @@ class SecurityAssessor:
         try:
             policy = self._graph.get_external_collaboration_settings()
         except Exception as exc:
-            logger.warning(
-                "Could not retrieve external collaboration settings: %s", exc
-            )
+            logger.warning("Could not retrieve external collaboration settings: %s", exc)
             return
 
         if policy.get("allowInvitesFrom") in (
@@ -304,9 +296,7 @@ class SecurityAssessor:
             return
 
         blocks_legacy = any(
-            _policy_blocks_legacy_auth(p)
-            for p in policies
-            if p.get("state") == "enabled"
+            _policy_blocks_legacy_auth(p) for p in policies if p.get("state") == "enabled"
         )
         if not blocks_legacy:
             findings.append(
@@ -350,9 +340,7 @@ class SecurityAssessor:
             principal = assignment.get("principal", {})
             if role_id in privileged_roles:
                 role_name = role_def.get("displayName", role_id)
-                principal_name = principal.get(
-                    "displayName", principal.get("id", "unknown")
-                )
+                principal_name = principal.get("displayName", principal.get("id", "unknown"))
                 findings.append(
                     Finding(
                         rule_id="M365-PIM-001",

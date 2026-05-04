@@ -69,13 +69,9 @@ class AgentConfig:
             m365=M365Config.from_env(),
             foundry=FoundryConfig.from_env(),
             rules_path=rules_path,
-            autonomous_remediation=os.environ.get(
-                "AGENT_AUTONOMOUS_REMEDIATION", "false"
-            ).lower()
+            autonomous_remediation=os.environ.get("AGENT_AUTONOMOUS_REMEDIATION", "false").lower()
             == "true",
-            report_schedule_cron=os.environ.get(
-                "AGENT_REPORT_SCHEDULE", "0 8 * * 1"
-            ),
+            report_schedule_cron=os.environ.get("AGENT_REPORT_SCHEDULE", "0 8 * * 1"),
         )
 
     @classmethod
@@ -91,15 +87,11 @@ class AgentConfig:
             m365=M365Config(
                 tenant_id=m365_data.get("tenant_id", _require_env("AZURE_TENANT_ID")),
                 client_id=m365_data.get("client_id", _require_env("AZURE_CLIENT_ID")),
-                client_secret=m365_data.get(
-                    "client_secret", _require_env("AZURE_CLIENT_SECRET")
-                ),
+                client_secret=m365_data.get("client_secret", _require_env("AZURE_CLIENT_SECRET")),
                 monitored_tenants=m365_data.get("monitored_tenants", []),
             ),
             foundry=FoundryConfig(
-                endpoint=foundry_data.get(
-                    "endpoint", _require_env("FOUNDRY_ENDPOINT")
-                ),
+                endpoint=foundry_data.get("endpoint", _require_env("FOUNDRY_ENDPOINT")),
                 api_key=foundry_data.get("api_key", _require_env("FOUNDRY_API_KEY")),
                 agent_name=foundry_data.get("agent_name", "m365-security-agent"),
                 model_deployment=foundry_data.get("model_deployment", "gpt-4o"),
@@ -107,11 +99,7 @@ class AgentConfig:
             rules_path=Path(
                 data.get(
                     "rules_path",
-                    str(
-                        Path(__file__).parent.parent
-                        / "rules"
-                        / "default_rules.yaml"
-                    ),
+                    str(Path(__file__).parent.parent / "rules" / "default_rules.yaml"),
                 )
             ),
             autonomous_remediation=data.get("autonomous_remediation", False),
@@ -127,9 +115,7 @@ class AgentConfig:
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if not value:
-        raise OSError(
-            f"Required environment variable '{name}' is not set."
-        )
+        raise OSError(f"Required environment variable '{name}' is not set.")
     return value
 
 

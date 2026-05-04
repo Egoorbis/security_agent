@@ -59,24 +59,18 @@ class TenantConfigurator:
                 continue
             method_name = REMEDIATION_REGISTRY.get(finding.rule_id)
             if not method_name:
-                logger.debug(
-                    "No remediation registered for rule '%s'", finding.rule_id
-                )
+                logger.debug("No remediation registered for rule '%s'", finding.rule_id)
                 continue
             method = getattr(self, method_name, None)
             if method is None:
-                logger.warning(
-                    "Remediation method '%s' not found on configurator", method_name
-                )
+                logger.warning("Remediation method '%s' not found on configurator", method_name)
                 continue
             try:
                 method(finding)
                 results[finding.rule_id] = True
                 logger.info("Remediation applied for rule '%s'", finding.rule_id)
             except Exception as exc:
-                logger.error(
-                    "Remediation failed for rule '%s': %s", finding.rule_id, exc
-                )
+                logger.error("Remediation failed for rule '%s': %s", finding.rule_id, exc)
                 results[finding.rule_id] = False
         return results
 
@@ -132,9 +126,7 @@ class TenantConfigurator:
         """Set guest invitation policy to admins only."""
         body = {"allowInvitesFrom": "adminsOnly"}
         if self._dry_run:
-            logger.info(
-                "[DRY RUN] Would update externalIdentitiesPolicy: %s", body
-            )
+            logger.info("[DRY RUN] Would update externalIdentitiesPolicy: %s", body)
             return
         self._graph._patch(
             "https://graph.microsoft.com/v1.0/policies/externalIdentitiesPolicy",
