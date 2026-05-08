@@ -1,0 +1,38 @@
+# Copy this file to terraform.tfvars and fill in the sensitive values.
+# Never commit terraform.tfvars to source control.
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+tenant_id       = "00000000-0000-0000-0000-000000000000"
+
+prefix      = "m365agent"
+environment = "production"
+location    = "eastus"
+
+# Container Registry (pre-existing, ABAC-enabled)
+acr_name                = "metrreg"
+acr_resource_group_name = "rg-base-container"
+
+# Agent image
+agent_image_name = "m365-security-agent"
+agent_image_tag  = "latest"
+
+# M365 app registration
+m365_client_id     = "00000000-0000-0000-0000-000000000000"
+m365_client_secret = "REPLACE_ME"
+
+monitored_tenant_ids = []
+
+# Azure AI Foundry / OpenAI
+# Note: foundry_api_key is auto-wired from the deployed Azure OpenAI account.
+foundry_agent_name       = "m365-security-agent"
+foundry_model_deployment = "gpt-4o"
+ai_foundry_location      = "eastus"
+
+# Agent behaviour
+assessment_schedule_cron = "0 8 * * 1"
+autonomous_remediation   = false
+
+tags = {
+  owner   = "security-team"
+  project = "m365-security-agent"
+}
