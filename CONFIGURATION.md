@@ -26,7 +26,7 @@ These resources must exist **before** running `terraform apply` for the first ti
 | Azure Subscription | The target subscription where agent resources will be deployed |
 | Entra ID tenant | Home tenant for the service principal and the M365 app registration |
 | Azure Container Registry | Name: `metrreg` · Resource group: `rg-base-container` · Admin access must be **disabled** (ABAC / role-based pull) |
-| Terraform state storage account | A Storage Account with a Blob container to hold the `.tfstate` file (can be in any resource group) |
+| Terraform state storage account | A Storage Account with a Blob container to hold the `.tfstate` file (can be in any resource group). **Key-based authentication should be disabled** for security – Terraform will authenticate using OIDC. |
 
 ---
 
