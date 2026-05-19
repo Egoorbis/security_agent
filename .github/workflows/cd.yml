@@ -108,13 +108,17 @@ jobs:
 
       - name: Terraform Plan
         run: |
+          # Trim whitespace from repository variables to avoid validation errors
+          PREFIX=$(echo "${{ vars.TF_PREFIX }}" | tr -d '[:space:]')
+          ENVIRONMENT=$(echo "${{ vars.TF_ENVIRONMENT }}" | tr -d '[:space:]')
+
           terraform plan \
             -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
             -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}" \
             -var="m365_client_id=${{ secrets.M365_CLIENT_ID }}" \
             -var="m365_client_secret=${{ secrets.M365_CLIENT_SECRET }}" \
-            -var="prefix=${{ vars.TF_PREFIX }}" \
-            -var="environment=${{ vars.TF_ENVIRONMENT }}" \
+            -var="prefix=${PREFIX}" \
+            -var="environment=${ENVIRONMENT}" \
             -out=tfplan
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
