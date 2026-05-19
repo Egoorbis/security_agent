@@ -8,9 +8,8 @@ prefix      = "m365agent"
 environment = "production"
 location    = "eastus"
 
-# Container Registry (pre-existing, ABAC-enabled)
-acr_name                = "metrreg"
-acr_resource_group_name = "rg-base-container"
+# Container Registry (will be created by Terraform)
+acr_sku = "Basic" # Options: Basic, Standard, Premium
 
 # Agent image
 agent_image_name = "m365-security-agent"

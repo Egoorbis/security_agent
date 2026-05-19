@@ -10,7 +10,7 @@ locals {
   name_suffix = random_string.suffix.result
 
   # Repository-level scope used for ABAC role assignments on the ACR
-  acr_repo_scope = "${data.azurerm_container_registry.existing.id}/repositories/${var.agent_image_name}"
+  acr_repo_scope = "${module.container_registry.id}/repositories/${var.agent_image_name}"
 }
 
 resource "random_string" "suffix" {
@@ -51,12 +51,17 @@ module "key_vault" {
 }
 
 # ---------------------------------------------------------------------------
-# Container Registry – pre-existing registry (ABAC / admin disabled)
+# Container Registry – Azure Container Registry for agent Docker images
 # ---------------------------------------------------------------------------
 
-data "azurerm_container_registry" "existing" {
-  name                = var.acr_name
-  resource_group_name = var.acr_resource_group_name
+module "container_registry" {
+  source = "./modules/container_registry"
+
+  name                = "acr${var.prefix}${local.name_suffix}"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  sku                 = var.acr_sku
+  tags                = local.common_tags
 }
 
 # Grant the CI/CD service principal permission to push images (ABAC repository-scoped)
@@ -93,10 +98,10 @@ module "container_app" {
   tags                = local.common_tags
 
   # Docker image published by the CD pipeline
-  container_image = "${data.azurerm_container_registry.existing.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
+  container_image = "${module.container_registry.login_server}/${var.agent_image_name}:${var.agent_image_tag}"
 
   # Registry pull uses managed identity (ABAC) – no admin credentials
-  registry_server = data.azurerm_container_registry.existing.login_server
+  registry_server = module.container_registry.login_server
   acr_resource_id = local.acr_repo_scope
 
   # Cron expression for scheduled assessments (default: Monday 08:00 UTC)
