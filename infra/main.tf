@@ -8,9 +8,6 @@ locals {
 
   # Unique suffix to avoid global name collisions (Key Vault)
   name_suffix = random_string.suffix.result
-
-  # Repository-level scope used for ABAC role assignments on the ACR
-  acr_repo_scope = "${module.container_registry.id}/repositories/${var.agent_image_name}"
 }
 
 resource "random_string" "suffix" {
@@ -64,10 +61,10 @@ module "container_registry" {
   tags                = local.common_tags
 }
 
-# Grant the CI/CD service principal permission to push images (ABAC repository-scoped)
+# Grant the CI/CD service principal permission to push images (registry-level)
 resource "azurerm_role_assignment" "acr_push" {
-  scope                = local.acr_repo_scope
-  role_definition_name = "Container Registry Repository Writer"
+  scope                = module.container_registry.id
+  role_definition_name = "AcrPush"
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
@@ -102,7 +99,7 @@ module "container_app" {
 
   # Registry pull uses managed identity (ABAC) – no admin credentials
   registry_server = module.container_registry.login_server
-  acr_resource_id = local.acr_repo_scope
+  acr_resource_id = module.container_registry.id
 
   # Cron expression for scheduled assessments (default: Monday 08:00 UTC)
   schedule_cron = var.assessment_schedule_cron

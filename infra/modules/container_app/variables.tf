@@ -32,7 +32,7 @@ variable "registry_server" {
 }
 
 variable "acr_resource_id" {
-  description = "Repository-level resource scope of the ACR repository (format: /subscriptions/.../registries/{name}/repositories/{repo}). Used to grant Container Registry Repository Reader to the managed identity."
+  description = "Registry-level resource ID of the Azure Container Registry (format: /subscriptions/.../registries/{name}). Used to grant AcrPull to the managed identity."
   type        = string
 }
 
