@@ -105,7 +105,8 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.BACKEND_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ secrets.BACKEND_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.BACKEND_CONTAINER_NAME }}" \
-            -backend-config="key=${{ secrets.BACKEND_KEY }}"
+            -backend-config="key=${{ secrets.BACKEND_KEY }}" \
+            -backend-config="use_oidc=true"
 
       - name: Terraform Validate
         run: terraform validate
@@ -169,7 +170,8 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.BACKEND_RESOURCE_GROUP }}" \
             -backend-config="storage_account_name=${{ secrets.BACKEND_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.BACKEND_CONTAINER_NAME }}" \
-            -backend-config="key=${{ secrets.BACKEND_KEY }}"
+            -backend-config="key=${{ secrets.BACKEND_KEY }}" \
+            -backend-config="use_oidc=true"
 
       - name: Download Terraform plan
         uses: actions/download-artifact@v4.1.3
