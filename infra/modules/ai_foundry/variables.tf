@@ -16,19 +16,19 @@ variable "location" {
 variable "model_deployment" {
   description = "Name of the model deployment to create."
   type        = string
-  default     = "gpt-4o"
+  default     = "gpt-4o-mini"
 }
 
 variable "model_name" {
-  description = "Azure OpenAI model name to deploy (e.g. gpt-4o, gpt-4-turbo)."
+  description = "Azure OpenAI model name to deploy (e.g. gpt-4o-mini, gpt-4o, gpt-4-turbo)."
   type        = string
-  default     = "gpt-4o"
+  default     = "gpt-4o-mini"
 }
 
 variable "model_version" {
   description = "Model version string."
   type        = string
-  default     = "2024-11-20"
+  default     = "2024-07-18"
 }
 
 variable "model_capacity_tpm" {

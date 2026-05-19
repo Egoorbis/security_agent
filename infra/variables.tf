@@ -121,7 +121,7 @@ variable "foundry_agent_name" {
 variable "foundry_model_deployment" {
   description = "Name of the model deployment in the Azure OpenAI account."
   type        = string
-  default     = "gpt-4o"
+  default     = "gpt-4o-mini"
 }
 
 # ---------------------------------------------------------------------------

@@ -37,7 +37,7 @@ class FoundryConfig:
     endpoint: str
     api_key: str
     agent_name: str = "m365-security-agent"
-    model_deployment: str = "gpt-4o"
+    model_deployment: str = "gpt-4o-mini"
 
     @classmethod
     def from_env(cls) -> FoundryConfig:
@@ -46,7 +46,7 @@ class FoundryConfig:
             endpoint=_require_env("FOUNDRY_ENDPOINT"),
             api_key=_require_env("FOUNDRY_API_KEY"),
             agent_name=os.environ.get("FOUNDRY_AGENT_NAME", "m365-security-agent"),
-            model_deployment=os.environ.get("FOUNDRY_MODEL_DEPLOYMENT", "gpt-4o"),
+            model_deployment=os.environ.get("FOUNDRY_MODEL_DEPLOYMENT", "gpt-4o-mini"),
         )
 
 
@@ -94,7 +94,7 @@ class AgentConfig:
                 endpoint=foundry_data.get("endpoint", _require_env("FOUNDRY_ENDPOINT")),
                 api_key=foundry_data.get("api_key", _require_env("FOUNDRY_API_KEY")),
                 agent_name=foundry_data.get("agent_name", "m365-security-agent"),
-                model_deployment=foundry_data.get("model_deployment", "gpt-4o"),
+                model_deployment=foundry_data.get("model_deployment", "gpt-4o-mini"),
             ),
             rules_path=Path(
                 data.get(

@@ -73,7 +73,7 @@ export FOUNDRY_API_KEY=<your-foundry-api-key>
 export M365_MONITORED_TENANTS=tenant-a-id,tenant-b-id   # comma-separated
 export AGENT_AUTONOMOUS_REMEDIATION=false                # set to true to enable
 export FOUNDRY_AGENT_NAME=m365-security-agent
-export FOUNDRY_MODEL_DEPLOYMENT=gpt-4o
+export FOUNDRY_MODEL_DEPLOYMENT=gpt-4o-mini
 ```
 
 ### 3. Run an assessment and view the report

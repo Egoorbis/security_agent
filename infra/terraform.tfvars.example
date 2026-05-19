@@ -24,7 +24,7 @@ monitored_tenant_ids = []
 # Azure AI Foundry / OpenAI
 # Note: foundry_api_key is auto-wired from the deployed Azure OpenAI account.
 foundry_agent_name       = "m365-security-agent"
-foundry_model_deployment = "gpt-4o"
+foundry_model_deployment = "gpt-4o-mini"
 ai_foundry_location      = "eastus"
 
 # Agent behaviour
