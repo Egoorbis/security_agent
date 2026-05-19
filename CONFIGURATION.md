@@ -25,8 +25,9 @@ These resources must exist **before** running `terraform apply` for the first ti
 |---|---|
 | Azure Subscription | The target subscription where agent resources will be deployed |
 | Entra ID tenant | Home tenant for the service principal and the M365 app registration |
-| Azure Container Registry | Name: `metrreg` · Resource group: `rg-base-container` · Admin access must be **disabled** (ABAC / role-based pull) |
 | Terraform state storage account | A Storage Account with a Blob container to hold the `.tfstate` file (can be in any resource group) |
+
+> **Note:** The Azure Container Registry will be **created automatically** by Terraform during deployment.
 
 ---
 
@@ -60,16 +61,12 @@ Go to **Entra ID → App registrations → m365-security-agent-cicd → Certific
 
 Assign the following roles to the service principal (`AZURE_CLIENT_ID`) **before the first pipeline run**.
 
-> **Note:** Because this ACR has ABAC enabled, roles are assigned at the **repository** level (not the registry level). The scope format is:
-> `/subscriptions/{sub}/resourceGroups/rg-base-container/providers/Microsoft.ContainerRegistry/registries/metrreg/repositories/m365-security-agent`
-
 | Scope | Role | Why |
 |---|---|---|
-| Target subscription (or the agent resource group once created) | `Contributor` | Create/manage resource group, Key Vault, Azure OpenAI, Container App |
-| `metrreg/repositories/m365-security-agent` (repo scope) | `Container Registry Repository Writer` | Push Docker images via OIDC; ABAC-compatible replacement for `AcrPush` |
+| Target subscription (or the agent resource group once created) | `Contributor` | Create/manage resource group, Key Vault, Azure OpenAI, Container App, and Container Registry |
 | Terraform state storage account | `Storage Blob Data Contributor` | Read/write the `.tfstate` blob |
 
-> The `Container Registry Repository Reader` role for the Container App managed identity is assigned automatically by `terraform apply` via `azurerm_role_assignment.acr_pull` – no manual action required.
+> **Note:** Role assignments on the Container Registry (for both the CI/CD service principal and the Container App managed identity) are assigned **automatically** by Terraform via `azurerm_role_assignment` resources – no manual action required.
 
 ---
 
@@ -158,16 +155,6 @@ Navigate to **Settings → Secrets and variables → Actions → Secrets** and a
 |---|---|
 | `M365_CLIENT_ID` | Application (client) ID of the M365 app registration (see [section 4](#4-m365-app-registration-agent-identity)) |
 | `M365_CLIENT_SECRET` | Client secret of the M365 app registration |
-
-### 5.3 Azure Container Registry
-
-These are stored as **secrets** (not variables) because they describe infrastructure that should not be publicly visible.
-
-| Secret | Value |
-|---|---|
-| `ACR_NAME` | `metrreg` |
-| `ACR_LOGIN_SERVER` | `metrreg-g3f3hxgzfbfkfxhk.azurecr.io` |
-| `ACR_RESOURCE_GROUP` | `rg-base-container` |
 
 ---
 
