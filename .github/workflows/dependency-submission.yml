@@ -1,0 +1,33 @@
+name: "Dependency Submission"
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dependency-submission:
+    name: "Submit Dependencies"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Submit dependency snapshot
+        uses: advanced-security/maven-dependency-submission-action@v4
+        continue-on-error: true
+        if: hashFiles('**/pom.xml') != ''
+
+      - name: Submit Python dependencies
+        uses: advanced-security/py-dependency-submission-action@v1
+        continue-on-error: true
+        if: hashFiles('**/requirements.txt', '**/setup.py', '**/pyproject.toml') != ''
+
+      - name: Submit npm dependencies
+        uses: advanced-security/npm-dependency-submission-action@v1
+        continue-on-error: true
+        if: hashFiles('**/package.json', '**/package-lock.json', '**/yarn.lock') != ''
