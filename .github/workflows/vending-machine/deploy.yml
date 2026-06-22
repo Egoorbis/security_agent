@@ -11,7 +11,7 @@ permissions:
 jobs:
   call-vending-workflow:
     # Point this to your Meta-Repo's reusable workflow
-    uses: Egoorbis/gh-project-vending-machine/actions/reusable-deploy.yml@main
+    uses: Egoorbis/gh-project-vending-machine/actions/reusable_azure_deploy.yml@main
     with:
       env: "production"
     secrets:

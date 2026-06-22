@@ -1,0 +1,73 @@
+version: 2
+updates:
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-security:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+  # Terraform dependencies
+  - package-ecosystem: "terraform"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      terraform:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      terraform-security:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      python:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      python-security:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+
+  # npm/yarn dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      npm-security:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
