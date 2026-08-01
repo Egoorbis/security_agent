@@ -1,0 +1,204 @@
+# Azure Policy compliance rules for Terraform resources
+#
+# Schema
+# ------
+# id            : unique rule identifier
+# title         : short human-readable title
+# description   : detailed description (may use {resource_type}/{resource_name})
+# severity      : critical | high | medium | low | informational
+# enabled       : true | false
+# resource_type : azurerm_* resource type this rule targets (or "*" for all)
+# check         : name of built-in evaluator function
+# recommendation: remediation guidance
+# parameters    : optional key/value pairs passed to the evaluator
+
+rules:
+  # -------------------------------------------------------------------------
+  # Storage Accounts
+  # -------------------------------------------------------------------------
+
+  - id: "AZ-STORAGE-001"
+    title: "Storage account does not enforce HTTPS-only traffic"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has 'enable_https_traffic_only'
+      set to false. All traffic should be encrypted in transit.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_storage_account"
+    check: "storage_https_only"
+    recommendation: >-
+      Set 'enable_https_traffic_only = true' in the azurerm_storage_account block.
+    category: "encryption_in_transit"
+
+  - id: "AZ-STORAGE-002"
+    title: "Storage account allows public blob access"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has 'allow_nested_items_to_be_public'
+      enabled, exposing blob data to anonymous access.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_storage_account"
+    check: "storage_no_public_access"
+    recommendation: >-
+      Set 'allow_nested_items_to_be_public = false' in the azurerm_storage_account block.
+    category: "public_access"
+
+  - id: "AZ-STORAGE-003"
+    title: "Storage account minimum TLS version below 1.2"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) uses minimum TLS version '{value}',
+      which is below the required TLS1_2.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_storage_account"
+    check: "storage_min_tls"
+    recommendation: >-
+      Set 'min_tls_version = "TLS1_2"' in the azurerm_storage_account block.
+    category: "encryption_in_transit"
+
+  # -------------------------------------------------------------------------
+  # Key Vaults
+  # -------------------------------------------------------------------------
+
+  - id: "AZ-KV-001"
+    title: "Key Vault does not have soft delete enabled"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has soft delete disabled.
+      Soft delete protects against accidental deletion of keys, secrets, and certificates.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_key_vault"
+    check: "keyvault_soft_delete"
+    recommendation: >-
+      Set 'soft_delete_retention_days' to a value > 0 (e.g. 90) in the
+      azurerm_key_vault block. Note: soft_delete_enabled is deprecated; use
+      soft_delete_retention_days instead.
+    category: "data_protection"
+
+  - id: "AZ-KV-002"
+    title: "Key Vault does not have purge protection enabled"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) does not have purge protection
+      enabled, allowing permanent deletion of vault contents.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_key_vault"
+    check: "keyvault_purge_protection"
+    recommendation: >-
+      Set 'purge_protection_enabled = true' in the azurerm_key_vault block.
+    category: "data_protection"
+
+  - id: "AZ-KV-003"
+    title: "Key Vault network access is not restricted"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has no network ACLs defined
+      or defaults to 'Allow' for all traffic. Access should be restricted to
+      known networks or private endpoints.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_key_vault"
+    check: "keyvault_network_acls"
+    recommendation: >-
+      Add a 'network_acls' block with 'default_action = "Deny"' and restrict
+      access to specific IP ranges or virtual network subnets.
+    category: "network_security"
+
+  # -------------------------------------------------------------------------
+  # SQL / PostgreSQL Servers
+  # -------------------------------------------------------------------------
+
+  - id: "AZ-SQL-001"
+    title: "SQL Server allows public network access"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has public network access
+      enabled. Use private endpoints to restrict access.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_mssql_server"
+    check: "sql_no_public_network"
+    recommendation: >-
+      Set 'public_network_access_enabled = false' and use private endpoints
+      for database connectivity.
+    category: "network_security"
+
+  - id: "AZ-SQL-002"
+    title: "PostgreSQL Server allows public network access"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has public network access
+      enabled. Use private endpoints to restrict access.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_postgresql_server"
+    check: "sql_no_public_network"
+    recommendation: >-
+      Set 'public_network_access_enabled = false' and use private endpoints
+      for database connectivity.
+    category: "network_security"
+
+  - id: "AZ-SQL-003"
+    title: "PostgreSQL Flexible Server allows public network access"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has public network access
+      enabled. Use private endpoints to restrict access.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_postgresql_flexible_server"
+    check: "sql_no_public_network"
+    recommendation: >-
+      Set 'public_network_access_enabled = false' and use virtual network
+      integration or private endpoints for database connectivity.
+    category: "network_security"
+
+  # -------------------------------------------------------------------------
+  # Network Security Groups
+  # -------------------------------------------------------------------------
+
+  - id: "AZ-NSG-001"
+    title: "NSG rule allows inbound SSH (port 22) from the internet"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has an inbound rule that
+      permits SSH access (port 22) from any source ('*' or '0.0.0.0/0').
+      This exposes the resource to brute-force and credential-stuffing attacks.
+    severity: critical
+    enabled: true
+    resource_type: "azurerm_network_security_rule"
+    check: "nsg_no_open_ssh"
+    recommendation: >-
+      Restrict SSH access to specific trusted IP ranges or use Azure Bastion
+      for administrative access. Remove or update the overly permissive rule.
+    category: "network_security"
+
+  - id: "AZ-NSG-002"
+    title: "NSG rule allows inbound RDP (port 3389) from the internet"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has an inbound rule that
+      permits RDP access (port 3389) from any source ('*' or '0.0.0.0/0').
+    severity: critical
+    enabled: true
+    resource_type: "azurerm_network_security_rule"
+    check: "nsg_no_open_rdp"
+    recommendation: >-
+      Restrict RDP access to specific trusted IP ranges or use Azure Bastion.
+      Remove or update the overly permissive rule.
+    category: "network_security"
+
+  # -------------------------------------------------------------------------
+  # Resource Tagging
+  # -------------------------------------------------------------------------
+
+  - id: "AZ-TAG-001"
+    title: "Resource is missing required tags"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) is missing one or more
+      required tags: {missing_tags}.
+    severity: low
+    enabled: true
+    resource_type: "*"
+    check: "required_tags"
+    recommendation: >-
+      Add the missing tags to the resource's 'tags' block.
+    category: "governance"
+    parameters:
+      required_tags:
+        - "environment"
+        - "owner"

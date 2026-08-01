@@ -1,0 +1,54 @@
+name: Compliance Check
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "**/*.tf"
+      - "**/*.tfvars"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  compliance-check:
+    name: "IaC Compliance Check (Azure Policy + Wiz)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history for git diff
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "compliance_check/requirements.txt"
+
+      - name: Install compliance agent
+        run: pip install -r compliance_check/requirements.txt
+
+      - name: Determine PR base and head SHAs
+        id: shas
+        run: |
+          echo "base_sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run compliance check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PYTHONPATH: compliance_check
+        run: |
+          python -m agent.main \
+            --base-sha "${{ steps.shas.outputs.base_sha }}" \
+            --head-sha "${{ steps.shas.outputs.head_sha }}" \
+            --repo-path . \
+            --post-comment \
+            --fail-on-severity critical

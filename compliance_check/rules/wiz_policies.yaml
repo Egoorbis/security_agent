@@ -1,0 +1,147 @@
+# Wiz CSPM-inspired compliance rules for Terraform resources
+#
+# These rules mirror common Wiz cloud security posture management (CSPM)
+# findings for Azure infrastructure defined in Terraform.
+#
+# Schema is identical to azure_policies.yaml.
+
+rules:
+  # -------------------------------------------------------------------------
+  # Storage
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-STORAGE-001"
+    title: "Storage account blob container may allow public access"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has 'allow_nested_items_to_be_public'
+      not explicitly set to false. Public blob access can expose sensitive data.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_storage_account"
+    check: "wiz_storage_public_access"
+    recommendation: >-
+      Explicitly set 'allow_nested_items_to_be_public = false'.
+    category: "data_exposure"
+
+  - id: "WIZ-STORAGE-002"
+    title: "Storage account lacks infrastructure encryption"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) does not have
+      infrastructure (double) encryption enabled.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_storage_account"
+    check: "wiz_storage_infra_encryption"
+    recommendation: >-
+      Set 'infrastructure_encryption_enabled = true' in the
+      azurerm_storage_account block.
+    category: "encryption_at_rest"
+
+  # -------------------------------------------------------------------------
+  # Disks / Managed Disks
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-DISK-001"
+    title: "Managed disk is not encrypted with a customer-managed key"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) does not specify a
+      'disk_encryption_set_id', meaning it relies on platform-managed keys only.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_managed_disk"
+    check: "wiz_disk_cmk_encryption"
+    recommendation: >-
+      Attach a disk encryption set ('disk_encryption_set_id') that uses a
+      customer-managed key stored in Key Vault.
+    category: "encryption_at_rest"
+
+  # -------------------------------------------------------------------------
+  # Virtual Machines
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-VM-001"
+    title: "Virtual Machine OS disk not encrypted with customer-managed key"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) does not configure
+      a disk encryption set for its OS disk.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_linux_virtual_machine"
+    check: "wiz_vm_disk_encryption"
+    recommendation: >-
+      Set 'disk_encryption_set_id' on the 'os_disk' block or attach a
+      'azurerm_virtual_machine_extension' for Azure Disk Encryption.
+    category: "encryption_at_rest"
+
+  - id: "WIZ-VM-002"
+    title: "Windows Virtual Machine OS disk not encrypted with customer-managed key"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) does not configure
+      a disk encryption set for its OS disk.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_windows_virtual_machine"
+    check: "wiz_vm_disk_encryption"
+    recommendation: >-
+      Set 'disk_encryption_set_id' on the 'os_disk' block or attach a
+      'azurerm_virtual_machine_extension' for Azure Disk Encryption.
+    category: "encryption_at_rest"
+
+  # -------------------------------------------------------------------------
+  # IAM / Role Assignments
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-IAM-001"
+    title: "Overly broad role assignment (Owner or Contributor at subscription scope)"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) assigns the '{role_name}' role
+      at a broad scope. Over-permissive IAM assignments violate least-privilege.
+    severity: high
+    enabled: true
+    resource_type: "azurerm_role_assignment"
+    check: "wiz_iam_broad_assignment"
+    recommendation: >-
+      Scope role assignments to the narrowest necessary resource (resource group
+      or specific resource) and prefer built-in roles with least privilege.
+    category: "iam"
+    parameters:
+      sensitive_role_ids:
+        - "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"  # Owner
+        - "b24988ac-6180-42a0-ab88-20f7382dd24c"  # Contributor
+
+  # -------------------------------------------------------------------------
+  # Network
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-NET-001"
+    title: "NSG rule allows unrestricted inbound access on all ports"
+    description: >-
+      Resource '{resource_name}' ({resource_type}) has an inbound 'Allow' rule
+      with destination port range '*' open to any source. This allows all
+      inbound traffic.
+    severity: critical
+    enabled: true
+    resource_type: "azurerm_network_security_rule"
+    check: "wiz_nsg_any_inbound"
+    recommendation: >-
+      Replace the wildcard port range with specific required ports and restrict
+      the source address range to known CIDRs.
+    category: "network_security"
+
+  # -------------------------------------------------------------------------
+  # Monitoring / Diagnostics
+  # -------------------------------------------------------------------------
+
+  - id: "WIZ-MON-001"
+    title: "Key Vault has no diagnostic settings defined"
+    description: >-
+      No 'azurerm_monitor_diagnostic_setting' was found targeting a Key Vault.
+      Diagnostic logs are required to detect unauthorised access to secrets.
+    severity: medium
+    enabled: true
+    resource_type: "azurerm_key_vault"
+    check: "wiz_keyvault_diagnostics"
+    recommendation: >-
+      Add an 'azurerm_monitor_diagnostic_setting' resource that targets the
+      Key Vault and enables audit logs.
+    category: "logging_monitoring"
